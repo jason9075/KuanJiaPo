@@ -1,26 +1,40 @@
 from pathlib import Path
 from fastapi import FastAPI, Request, Query
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse
 from fastapi.responses import HTMLResponse, JSONResponse
+
 import uvicorn
 import MySQLdb
 import os
 import pytz
+import time
 from dotenv import load_dotenv
 
 load_dotenv()
 
-app = FastAPI()
-
 # Database connection setup
-db = MySQLdb.connect(
-    host=os.getenv("MYSQL_HOST"),
-    user=os.getenv("MYSQL_USER"),
-    password=os.getenv("MYSQL_PASSWORD"),
-    database=os.getenv("MYSQL_DATABASE"),
-)
 
+db = None
+max_retries = 5
+for i in range(max_retries):
+    try:
+        db = MySQLdb.connect(
+            host=os.getenv("MYSQL_HOST"),
+            user=os.getenv("MYSQL_USER"),
+            password=os.getenv("MYSQL_PASSWORD"),
+            database=os.getenv("MYSQL_DATABASE"),
+        )
+        break
+    except Exception as e:
+        print("Database connection error:", e)
+        time.sleep(5)
+        continue
+else:
+    print(f"Failed to connect to the database after {max_retries} retries")
+    exit(1)
+
+
+app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
@@ -33,18 +47,18 @@ async def home():
 @app.get("/api/events")
 async def get_events(page: int = Query(0), size: int = Query(30)):
     offset = page * size
-    cursor = db.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute(
-        """
-        SELECT id, screenshot_path, bbox_x, bbox_y, bbox_w, bbox_h, created_date
-        FROM event
-        ORDER BY created_date DESC
-        LIMIT %s OFFSET %s
-    """,
-        (size, offset),
-    )
-    events = cursor.fetchall()
-    cursor.close()
+    events = []
+    with db.cursor(MySQLdb.cursors.DictCursor) as cursor:
+        cursor.execute(
+            """
+            SELECT id, screenshot_path, bbox_x, bbox_y, bbox_w, bbox_h, created_date
+            FROM event
+            ORDER BY created_date DESC
+            LIMIT %s OFFSET %s
+        """,
+            (size, offset),
+        )
+        events = cursor.fetchall()
 
     # Convert datetime objects to string
     tz = pytz.timezone("Asia/Taipei")
