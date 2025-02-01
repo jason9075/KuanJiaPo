@@ -176,3 +176,5 @@ cython_debug/
 static/video/**
 !static/video/.keep
 
+static/screenshot/**
+!static/screenshot/.keep

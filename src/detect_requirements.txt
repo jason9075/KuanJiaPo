@@ -1,0 +1,7 @@
+deepface
+opencv-python
+tf-keras
+mediapipe
+python-dotenv
+pillow
+requests

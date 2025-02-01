@@ -15,24 +15,21 @@
         pillow
         requests
       ];
-      python = let
-        packageOverrides = self: super: {
-          opencv4 = super.opencv4.override {
-            enableGtk2 = true;
-            gtk2 = pkgs.gtk2;
-            enableFfmpeg = true;
-            ffmpeg_3 = pkgs.ffmpeg-full;
-          };
-        };
-      in pkgs.python312.override {
-        inherit packageOverrides;
-        self = python;
-      };
     in {
       devShells.x86_64-linux.default = pkgs.mkShell {
-        nativeBuildInputs = with pkgs; [ pythonEnv entr ffmpeg_6-full ];
+        nativeBuildInputs = with pkgs; [ pythonEnv stdenv.cc.cc entr ];
 
         shellHook = ''
+          if [ ! -f ".venv" ]; then
+            python -m venv .venv
+            source .venv/bin/activate
+            pip install -r requirements.txt
+          else
+            source .venv/bin/activate
+          fi
+          export LD_LIBRARY_PATH=${
+            pkgs.lib.makeLibraryPath [ pkgs.stdenv.cc.cc ]
+          }
           echo "KuanJiaPo Nix environment activated."
         '';
       };

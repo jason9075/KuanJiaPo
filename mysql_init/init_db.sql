@@ -12,6 +12,9 @@ CREATE TABLE user (
 CREATE TABLE event (
     id INT AUTO_INCREMENT PRIMARY KEY,
     screenshot_path VARCHAR(512) NOT NULL,
-    bbox VARCHAR(255) NOT NULL,
+    bbox_x INT NOT NULL,
+    bbox_y INT NOT NULL,
+    bbox_w INT NOT NULL,
+    bbox_h INT NOT NULL,
     created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

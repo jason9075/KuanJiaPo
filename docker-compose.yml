@@ -1,4 +1,36 @@
 services:
+  web:
+    build:
+      context: .
+      dockerfile: web.Dockerfile
+    container_name: kuanjiapo_web
+    restart: always
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      - MYSQL_HOST=mysql # because we are using links, we can use the service name as the host
+    volumes:
+      - ./static:/app/static
+      - ./src/web.py:/app/web.py
+    depends_on:
+      - mysql
+  detect:
+    build:
+      context: .
+      dockerfile: detect.Dockerfile
+    container_name: kuanjiapo_detect
+    restart: always
+    environment:
+      VIDEO_SOURCE: "http://web:8000/static/video/live.m3u8"
+      SAVE_API_URL: "http://web:8000/api/save"
+    volumes:
+      - ./static:/app/static
+      - ./src/detect.py:/app/detect.py
+      - .env:/app/.env
+    depends_on:
+      - web
   mysql:
     image: mysql:8.0
     restart: always
@@ -39,7 +71,7 @@ services:
     volumes:
       - ./static/video/:/output
     devices:
-      - "${VIDEO_SOURCE}:${VIDEO_SOURCE}"
+      - "${DEV_VIDEO}:${DEV_VIDEO}"
     depends_on:
       - nginx-rtmp
 volumes:

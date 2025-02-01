@@ -3,10 +3,22 @@ from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 import uvicorn
+import mysql.connector
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = FastAPI()
 
-# 靜態資源目錄
+# Database connection setup
+db = mysql.connector.connect(
+    host=os.getenv("MYSQL_HOST"),
+    user=os.getenv("MYSQL_USER"),
+    password=os.getenv("MYSQL_PASSWORD"),
+    database=os.getenv("MYSQL_DATABASE"),
+)
+
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
@@ -20,10 +32,22 @@ async def home():
 async def save_event(request: Request):
     data = await request.json()
     image_path = data.get("image_path")
-    bbox = data.get("bbox")
+    x = data.get("bbox_x")
+    y = data.get("bbox_y")
+    w = data.get("bbox_w")
+    h = data.get("bbox_h")
 
-    # Save the event to the database or filesystem
-    Path(image_path).write_text("Sample data for event")
+    # Save the event to the database
+    cursor = db.cursor()
+    cursor.execute(
+        """
+        INSERT INTO event (screenshot_path, bbox_x, bbox_y, bbox_w, bbox_h)
+        VALUES (%s, %s, %s, %s, %s)
+        """,
+        (image_path, x, y, w, h),
+    )
+    db.commit()
+
     return {"message": "Event saved successfully"}
 
 

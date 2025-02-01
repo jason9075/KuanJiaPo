@@ -1,8 +1,10 @@
 import cv2
 
+VIDEO_SOURCE = "http://localhost:8000/static/video/live.m3u8"
+
 
 def main():
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(VIDEO_SOURCE)
     if not cap.isOpened():
         print("Cannot open camera")
         exit()
