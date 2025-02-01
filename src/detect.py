@@ -14,6 +14,7 @@ VIDEO_SOURCE = os.getenv("VIDEO_SOURCE")
 SAVE_API_URL = os.getenv("SAVE_API_URL")
 INTERVAL_SEC = int(os.getenv("INTERVAL_SEC"))
 PERSON_INTERVAL_MIN = int(os.getenv("PERSON_INTERVAL_MIN"))
+FACE_CONF_THR = float(os.getenv("FACE_CONF_THR"))
 
 
 class Person:
@@ -81,7 +82,7 @@ def detect_faces():
 
         for detection in detections:
             confidence = detection["face_confidence"]
-            if confidence < 0.85:
+            if confidence < FACE_CONF_THR:
                 continue
             face_vector = detection["embedding"]
             face_area = detection["facial_area"]
@@ -94,11 +95,13 @@ def detect_faces():
                         person.timestamp = datetime.now()
                         person.face_vector = face_vector
                         save_event(frame, face_area)
+                        print(f"Person {person.uuid} updated.")
                     break
             else:
                 new_person = Person(face_vector)
                 person_dict[new_person.uuid] = new_person
                 save_event(frame, face_area)
+                print(f"New person detected: {new_person.uuid}")
 
     cap.release()
     cv2.destroyAllWindows()

@@ -1,6 +1,7 @@
 import cv2
 
 VIDEO_SOURCE = "http://localhost:8000/static/video/live.m3u8"
+VIDEO_SOURCE = 0
 
 
 def main():
