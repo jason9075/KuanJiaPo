@@ -80,6 +80,9 @@ def detect_faces():
             detections = [detections]
 
         for detection in detections:
+            confidence = detection["face_confidence"]
+            if confidence < 0.85:
+                continue
             face_vector = detection["embedding"]
             face_area = detection["facial_area"]
 
