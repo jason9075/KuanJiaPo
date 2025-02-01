@@ -4,3 +4,4 @@ uvicorn
 mysqlclient
 pillow
 requests
+pytz

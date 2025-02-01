@@ -1,10 +1,12 @@
 from pathlib import Path
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Query
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 import uvicorn
 import MySQLdb
 import os
+import pytz
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -28,6 +30,32 @@ async def home():
     return HTMLResponse(content=html_file.read_text(), status_code=200)
 
 
+@app.get("/api/events")
+async def get_events(page: int = Query(0), size: int = Query(30)):
+    offset = page * size
+    cursor = db.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute(
+        """
+        SELECT id, screenshot_path, bbox_x, bbox_y, bbox_w, bbox_h, created_date
+        FROM event
+        ORDER BY created_date DESC
+        LIMIT %s OFFSET %s
+    """,
+        (size, offset),
+    )
+    events = cursor.fetchall()
+    cursor.close()
+
+    # Convert datetime objects to string
+    tz = pytz.timezone("Asia/Taipei")
+    for event in events:
+        event["created_date"] = (
+            event["created_date"].astimezone(tz).strftime("%Y-%m-%d %H:%M:%S")
+        )
+
+    return JSONResponse(events)
+
+
 @app.post("/api/save")
 async def save_event(request: Request):
     data = await request.json()
@@ -49,7 +77,7 @@ async def save_event(request: Request):
     db.commit()
     cursor.close()
 
-    return {"message": "Event saved successfully"}
+    return JSONResponse({"message": "Event saved successfully"})
 
 
 if __name__ == "__main__":

@@ -13,8 +13,20 @@
 </head>
 
 <body>
-    <h1>Live Camera Feed</h1>
-    <video id="camera-feed" width="640" height="480" controls autoplay></video>
+    <nav class="navbar">
+        <a href="#" id="nav-live" class="nav-item active">Live</a>
+        <a href="#" id="nav-history" class="nav-item">History</a>
+    </nav>
+
+    <section id="live-section">
+        <h1>Live Camera Feed</h1>
+        <video id="camera-feed" width="800" height="600" controls autoplay></video>
+    </section>
+
+    <section id="history-section" style="display: none">
+        <h1>Event History</h1>
+        <div id="event-list"></div>
+    </section>
 </body>
 
 </html>

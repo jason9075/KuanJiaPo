@@ -31,8 +31,9 @@ def is_similar(vector1, vector2, threshold=0.6):
 
 
 def save_event(frame, bbox):
-    date_str = datetime.now().strftime("%Y-%m-%d")
-    time_str = datetime.now().strftime("%H%M%S")
+    # GMT +8
+    date_str = (datetime.now() + timedelta(hours=8)).strftime("%Y%m%d")
+    time_str = (datetime.now() + timedelta(hours=8)).strftime("%H%M%S")
     os.makedirs(f"./static/screenshot/{date_str}", exist_ok=True)
     image_path = f"./static/screenshot/{date_str}/{time_str}.jpg"
     cv2.imwrite(image_path, frame)

@@ -1,17 +1,100 @@
+/* General body styling */
 body {
-  font-family: Arial, sans-serif;
-  background-color: #f4f4f4;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f0f4f8;
   color: #333;
   text-align: center;
   padding: 20px;
+  margin: 0;
 }
 
+/* Navigation bar styling */
+.navbar {
+  display: flex;
+  justify-content: center;
+  background-color: #007bff;
+  padding: 10px 0;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.nav-item {
+  color: white;
+  text-decoration: none;
+  margin: 0 15px;
+  font-size: 18px;
+  font-weight: bold;
+  padding: 8px 16px;
+  border-radius: 5px;
+  transition: background-color 0.3s;
+}
+
+.nav-item:hover,
+.nav-item.active {
+  background-color: #0056b3;
+}
+
+/* Section headings */
 h1 {
   color: #007bff;
+  margin-top: 20px;
 }
 
+/* Video styling */
 video {
+  border: 3px solid #007bff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 800px;
+  margin: 20px auto;
+}
+
+/* History section styling */
+#event-list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  margin: 20px 0;
+}
+
+/* History item styling */
+.event-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  width: 90%;
+  max-width: 600px;
+  padding: 10px 15px;
+  margin: 10px 0;
+}
+
+.event-item:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Thumbnail image (canvas) */
+canvas {
+  width: 100px;
+  height: 100px;
   border: 2px solid #007bff;
-  border-radius: 10px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+}
+
+/* UUID and timestamp styling */
+.event-details {
+  flex-grow: 1;
+  margin-left: 15px;
+  text-align: left;
+}
+
+.event-details p {
+  margin: 5px 0;
+  font-size: 14px;
+  color: #555;
 }
