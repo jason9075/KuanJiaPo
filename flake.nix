@@ -11,7 +11,7 @@
         fastapi
         (opencv4.override { enableGtk3 = true; })
         uvicorn
-        mysql-connector
+        mysqlclient
         pillow
         requests
       ];

@@ -3,7 +3,7 @@ from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 import uvicorn
-import mysql.connector
+import MySQLdb
 import os
 from dotenv import load_dotenv
 
@@ -12,7 +12,7 @@ load_dotenv()
 app = FastAPI()
 
 # Database connection setup
-db = mysql.connector.connect(
+db = MySQLdb.connect(
     host=os.getenv("MYSQL_HOST"),
     user=os.getenv("MYSQL_USER"),
     password=os.getenv("MYSQL_PASSWORD"),
@@ -47,6 +47,7 @@ async def save_event(request: Request):
         (image_path, x, y, w, h),
     )
     db.commit()
+    cursor.close()
 
     return {"message": "Event saved successfully"}
 

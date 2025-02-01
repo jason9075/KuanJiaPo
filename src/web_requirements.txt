@@ -1,6 +1,6 @@
 python-dotenv
 fastapi
 uvicorn
-mysql-connector
+mysqlclient
 pillow
 requests

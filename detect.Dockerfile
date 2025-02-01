@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean
 
 # Copy application files
-COPY . /app
+COPY src /app/src
 
 # Install dependencies
 RUN pip install --no-cache-dir -r src/detect_requirements.txt
