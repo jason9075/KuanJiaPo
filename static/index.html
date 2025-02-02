@@ -1,31 +1,33 @@
 <!doctype html>
 <html lang="en">
-
-<head>
+  <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>KuanJiaPo Camera</title>
     <link rel="stylesheet" href="/static/style.css" />
-    <link rel="icon"
-        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>👵</text></svg>" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>👵</text></svg>"
+    />
     <script src="/static/script.js" defer></script>
-</head>
+  </head>
 
-<body>
+  <body>
     <nav class="navbar">
-        <a href="#" id="nav-live" class="nav-item active">Live</a>
-        <a href="#" id="nav-history" class="nav-item">History</a>
+      <a href="#" id="nav-live" class="nav-item active">Live</a>
+      <a href="#" id="nav-history" class="nav-item">History</a>
     </nav>
 
     <section id="live-section">
-        <h1>Live Camera Feed</h1>
+      <h1>Live Camera Feed</h1>
+      <div class="image-container">
         <img id="live-image" width="800" height="600" alt="Live feed frame" />
+      </div>
     </section>
 
     <section id="history-section" style="display: none">
-        <h1>Event History</h1>
-        <div id="event-list"></div>
+      <h1>Event History</h1>
+      <div id="event-list"></div>
     </section>
-</body>
-
+  </body>
 </html>

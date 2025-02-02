@@ -1,6 +1,6 @@
 /* General body styling */
 body {
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background-color: #2e3440;
   color: #d8dee9;
   text-align: center;
@@ -44,15 +44,20 @@ h1 {
 }
 
 /* Video styling */
-img#live-image {
+.image-container {
   width: 100%;
   max-width: 800px;
-  aspect-ratio: 4 / 3;
+  margin: 0 auto;
+}
+
+img#live-image {
+  width: 100%;
+  height: auto;
   border: 3px solid #5e81ac;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   margin: 20px auto;
-  object-fit: cover;
+  object-fit: contain;
 }
 
 /* History section styling */
