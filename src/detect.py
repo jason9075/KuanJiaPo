@@ -33,7 +33,7 @@ def is_similar(vector1, vector2, threshold=0.6):
     return ((cos_sim + 1) / 2) > threshold
 
 
-def save_event(frame, bbox):
+def save_event(frame, bbox, confidence):
     # GMT +8
     date_str = (datetime.now() + timedelta(hours=8)).strftime("%Y%m%d")
     time_str = (datetime.now() + timedelta(hours=8)).strftime("%H%M%S")
@@ -48,6 +48,7 @@ def save_event(frame, bbox):
             "bbox_y": bbox["y"],
             "bbox_w": bbox["w"],
             "bbox_h": bbox["h"],
+            "confidence": confidence,
         },
     )
 
@@ -74,6 +75,7 @@ def detect_faces():
             time.sleep(0.1)  # Avoid busy waiting
             continue
 
+        print(f"Number of people: {len(person_dict)}")
         last_frame_time = time.time()
 
         frame_copy = frame.copy()
@@ -93,7 +95,6 @@ def detect_faces():
 
         for detection in detections:
             confidence = detection.get("face_confidence", 0.0)
-            print(f"Face confidence: {confidence}")
             if confidence < FACE_CONF_THR:
                 continue
             face_vector = detection["embedding"]
@@ -106,13 +107,13 @@ def detect_faces():
                     ):
                         person.timestamp = datetime.now()
                         person.face_vector = face_vector
-                        save_event(frame, face_area)
+                        save_event(frame, face_area, confidence)
                         print(f"Person {person.uuid} updated.")
                     break
             else:
                 new_person = Person(face_vector)
                 person_dict[new_person.uuid] = new_person
-                save_event(frame, face_area)
+                save_event(frame, face_area, confidence)
                 print(f"New person detected: {new_person.uuid}")
 
         time.sleep(0.1)  # Avoid busy waiting

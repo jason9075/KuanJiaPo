@@ -16,5 +16,6 @@ CREATE TABLE event (
     bbox_y INT NOT NULL,
     bbox_w INT NOT NULL,
     bbox_h INT NOT NULL,
+    confidence FLOAT NOT NULL,
     created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

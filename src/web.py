@@ -51,7 +51,7 @@ async def get_events(page: int = Query(0), size: int = Query(30)):
     with db.cursor(MySQLdb.cursors.DictCursor) as cursor:
         cursor.execute(
             """
-            SELECT id, screenshot_path, bbox_x, bbox_y, bbox_w, bbox_h, created_date
+            SELECT id, screenshot_path, bbox_x, bbox_y, bbox_w, bbox_h, confidence, created_date
             FROM event
             ORDER BY created_date DESC
             LIMIT %s OFFSET %s
@@ -78,15 +78,16 @@ async def save_event(request: Request):
     y = data.get("bbox_y")
     w = data.get("bbox_w")
     h = data.get("bbox_h")
+    confidence = data.get("confidence")
 
     # Save the event to the database
     cursor = db.cursor()
     cursor.execute(
         """
-        INSERT INTO event (screenshot_path, bbox_x, bbox_y, bbox_w, bbox_h)
-        VALUES (%s, %s, %s, %s, %s)
+        INSERT INTO event (screenshot_path, bbox_x, bbox_y, bbox_w, bbox_h, confidence)
+        VALUES (%s, %s, %s, %s, %s, %s)
         """,
-        (image_path, x, y, w, h),
+        (image_path, x, y, w, h, confidence),
     )
     db.commit()
     cursor.close()

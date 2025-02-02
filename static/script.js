@@ -106,6 +106,7 @@ document.addEventListener("DOMContentLoaded", () => {
             eventItem.innerHTML = `
                 <div class="event-details">
                     <p><strong>UUID:</strong> ${event.id}</p>
+                    <p><strong>Confidence:</strong> ${event.confidence}</p>
                     <p><strong>Timestamp:</strong> ${event.created_date} (${timeAgo(event.created_date)})</p>
                 </div>
             `;
