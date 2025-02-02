@@ -28,6 +28,8 @@ services:
       - ./static:/app/static
       - ./src/detect.py:/app/detect.py
       - .env:/app/.env
+    devices:
+      - "${DEV_VIDEO}:${DEV_VIDEO}"
     depends_on:
       - web
   mysql:
