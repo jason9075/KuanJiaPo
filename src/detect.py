@@ -76,12 +76,13 @@ def detect_faces():
 
         last_frame_time = time.time()
 
+        frame_copy = frame.copy()
         try:
             detections = DeepFace.represent(
-                frame.copy(),
+                frame_copy,
                 model_name="ArcFace",
                 enforce_detection=False,
-                detector_backend="mediapipe",
+                detector_backend="mtcnn",
             )
         except Exception as e:
             print(f"Detection error: {e}")
@@ -93,6 +94,7 @@ def detect_faces():
         for detection in detections:
             confidence = detection.get("face_confidence", 0.0)
             print(f"Face confidence: {confidence}")
+            continue
             if confidence < FACE_CONF_THR:
                 continue
             face_vector = detection["embedding"]
