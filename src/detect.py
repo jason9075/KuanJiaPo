@@ -94,7 +94,6 @@ def detect_faces():
         for detection in detections:
             confidence = detection.get("face_confidence", 0.0)
             print(f"Face confidence: {confidence}")
-            continue
             if confidence < FACE_CONF_THR:
                 continue
             face_vector = detection["embedding"]
