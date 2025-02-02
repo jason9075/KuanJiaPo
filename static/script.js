@@ -39,6 +39,21 @@ document.addEventListener("DOMContentLoaded", () => {
         await loadEvents();
     });
 
+    // Helper function to calculate time difference
+    function timeAgo(timestamp) {
+        const eventTime = new Date(timestamp);
+        const now = new Date();
+        const diffMs = now - eventTime;
+        const diffMinutes = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMinutes / 60);
+        const diffDays = Math.floor(diffHours / 24);
+
+        if (diffDays > 0) return `${diffDays} days ago`;
+        if (diffHours > 0) return `${diffHours} hours ago`;
+        if (diffMinutes > 0) return `${diffMinutes} mins ago`;
+        return "just now";
+    }
+
     // Function to load events with pagination
     async function loadEvents() {
         if (loading || allDataLoaded) return;
@@ -91,7 +106,7 @@ document.addEventListener("DOMContentLoaded", () => {
             eventItem.innerHTML = `
                 <div class="event-details">
                     <p><strong>UUID:</strong> ${event.id}</p>
-                    <p><strong>Timestamp:</strong> ${event.created_date}</p>
+                    <p><strong>Timestamp:</strong> ${event.created_date} (${timeAgo(event.created_date)})</p>
                 </div>
             `;
 
