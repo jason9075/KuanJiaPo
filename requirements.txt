@@ -3,3 +3,4 @@ opencv-python
 tf-keras
 mediapipe
 python-dotenv
+mysqlclient

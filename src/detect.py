@@ -1,3 +1,4 @@
+import threading
 import time
 import uuid
 import cv2
@@ -10,8 +11,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-VIDEO_SOURCE = os.getenv("VIDEO_SOURCE")
-SAVE_API_URL = os.getenv("SAVE_API_URL")
+FRAME_PATH = "./static/screenshot/frame.jpg"
+VIDEO_SOURCE = int(os.getenv("VIDEO_SOURCE"))
+SAVE_API_URL = os.getenv("SAVE_API_URL", "")
 INTERVAL_SEC = int(os.getenv("INTERVAL_SEC"))
 PERSON_INTERVAL_MIN = int(os.getenv("PERSON_INTERVAL_MIN"))
 FACE_CONF_THR = float(os.getenv("FACE_CONF_THR"))
@@ -51,18 +53,23 @@ def save_event(frame, bbox):
 
 
 def detect_faces():
-    cap = cv2.VideoCapture(VIDEO_SOURCE)
     person_dict = {}
     last_frame_time = 0
 
-    while cap.isOpened():
+    while True:
         if time.time() - last_frame_time < INTERVAL_SEC:
-            cap.grab()
+            time.sleep(0.1)  # Avoid busy waiting
             continue
 
-        ret, frame = cap.read()
-        if not ret:
-            break
+        if not os.path.exists(FRAME_PATH):
+            time.sleep(0.1)
+            continue
+
+        frame = cv2.imread(FRAME_PATH)
+        if frame is None:
+            print("Failed to read frame.")
+            time.sleep(0.1)
+            continue
 
         last_frame_time = time.time()
 
@@ -81,7 +88,7 @@ def detect_faces():
             detections = [detections]
 
         for detection in detections:
-            confidence = detection["face_confidence"]
+            confidence = detection.get("face_confidence", 0)
             if confidence < FACE_CONF_THR:
                 continue
             face_vector = detection["embedding"]
@@ -103,9 +110,22 @@ def detect_faces():
                 save_event(frame, face_area)
                 print(f"New person detected: {new_person.uuid}")
 
+        time.sleep(1)  # Avoid busy waiting
+
+
+def save_frame_from_video():
+    cap = cv2.VideoCapture(VIDEO_SOURCE)
+    while True:
+        ret, frame = cap.read()
+        if ret:
+            cv2.imwrite(FRAME_PATH, frame)
+        time.sleep(0.1)  # Save frame at regular intervals
+
     cap.release()
-    cv2.destroyAllWindows()
 
 
 if __name__ == "__main__":
+    frame_thread = threading.Thread(target=save_frame_from_video, daemon=True)
+    frame_thread.start()
+
     detect_faces()

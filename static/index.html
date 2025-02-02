@@ -8,7 +8,6 @@
     <link rel="stylesheet" href="/static/style.css" />
     <link rel="icon"
         href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>👵</text></svg>" />
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <script src="/static/script.js" defer></script>
 </head>
 
@@ -20,7 +19,7 @@
 
     <section id="live-section">
         <h1>Live Camera Feed</h1>
-        <video id="camera-feed" width="800" height="600" controls autoplay></video>
+        <img id="live-image" width="800" height="600" alt="Live feed frame" />
     </section>
 
     <section id="history-section" style="display: none">

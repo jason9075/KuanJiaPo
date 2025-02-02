@@ -11,13 +11,19 @@
         fastapi
         (opencv4.override { enableGtk3 = true; })
         uvicorn
-        mysqlclient
         pillow
         requests
       ];
     in {
       devShells.x86_64-linux.default = pkgs.mkShell {
-        nativeBuildInputs = with pkgs; [ pythonEnv stdenv.cc.cc entr ];
+        nativeBuildInputs = with pkgs; [
+          pythonEnv
+          gcc
+          stdenv.cc.cc
+          pkg-config
+          libmysqlclient
+          entr
+        ];
 
         shellHook = ''
           if [ ! -f ".venv" ]; then

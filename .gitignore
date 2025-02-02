@@ -173,8 +173,5 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 
-static/video/**
-!static/video/.keep
-
 static/screenshot/**
 !static/screenshot/.keep

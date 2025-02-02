@@ -1,30 +1,22 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const video = document.getElementById("camera-feed");
     const liveSection = document.getElementById("live-section");
     const historySection = document.getElementById("history-section");
     const navLive = document.getElementById("nav-live");
     const navHistory = document.getElementById("nav-history");
     const eventList = document.getElementById("event-list");
+    const liveImage = document.getElementById("live-image");
 
     let currentPage = 0;
     const pageSize = 30;
     let loading = false;
     let allDataLoaded = false;
 
-    // Initialize HLS stream
-    if (Hls.isSupported()) {
-        const hls = new Hls();
-        hls.loadSource("/static/video/live.m3u8");
-        hls.attachMedia(video);
-        hls.on(Hls.Events.MANIFEST_PARSED, () => {
-            video.play();
-        });
-    } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
-        video.src = "/static/video/live.m3u8";
-        video.addEventListener("loadedmetadata", () => {
-            video.play();
-        });
+    function updateLiveImage() {
+        liveImage.src = "/static/screenshot/frame.jpg?" + new Date().getTime(); // Add timestamp to prevent caching
     }
+
+    // Update live image at regular intervals
+    setInterval(updateLiveImage, 1000); // Update every second
 
     // Navigation logic
     navLive.addEventListener("click", () => {
