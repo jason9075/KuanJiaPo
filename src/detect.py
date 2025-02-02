@@ -53,22 +53,25 @@ def save_event(frame, bbox):
 
 
 def detect_faces():
+    cap = cv2.VideoCapture(VIDEO_SOURCE)
+
     person_dict = {}
     last_frame_time = 0
 
     while True:
+        ret, frame = cap.read()
+        if not ret:
+            print("Failed to read from video source.")
+            time.sleep(0.1)
+            continue
+
+        # Save the frame to avoid partial write issues
+        temp_frame_path = FRAME_PATH.split(".jpg")[0] + ".tmp.jpg"
+        cv2.imwrite(temp_frame_path, frame)
+        os.replace(temp_frame_path, FRAME_PATH)
+
         if time.time() - last_frame_time < INTERVAL_SEC:
             time.sleep(0.1)  # Avoid busy waiting
-            continue
-
-        if not os.path.exists(FRAME_PATH):
-            time.sleep(0.1)
-            continue
-
-        frame = cv2.imread(FRAME_PATH)
-        if frame is None:
-            print("Failed to read frame.")
-            time.sleep(0.1)
             continue
 
         last_frame_time = time.time()
@@ -88,7 +91,8 @@ def detect_faces():
             detections = [detections]
 
         for detection in detections:
-            confidence = detection.get("face_confidence", 0)
+            confidence = detection.get("face_confidence", 0.0)
+            print(f"Face confidence: {confidence}")
             if confidence < FACE_CONF_THR:
                 continue
             face_vector = detection["embedding"]
@@ -110,22 +114,10 @@ def detect_faces():
                 save_event(frame, face_area)
                 print(f"New person detected: {new_person.uuid}")
 
-        time.sleep(1)  # Avoid busy waiting
-
-
-def save_frame_from_video():
-    cap = cv2.VideoCapture(VIDEO_SOURCE)
-    while True:
-        ret, frame = cap.read()
-        if ret:
-            cv2.imwrite(FRAME_PATH, frame)
-        time.sleep(0.1)  # Save frame at regular intervals
+        time.sleep(0.1)  # Avoid busy waiting
 
     cap.release()
 
 
 if __name__ == "__main__":
-    frame_thread = threading.Thread(target=save_frame_from_video, daemon=True)
-    frame_thread.start()
-
     detect_faces()
