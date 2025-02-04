@@ -1,0 +1,59 @@
+name: CI
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+      # 如果你的專案需要特定的 Python 版本
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+      # 以下若不使用 Python 做測試可省略；若有多個需求檔可視情況安裝
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+      # 假設你會使用 unittest 或 pytest 作測試，可視你的實際測試架構而調整
+      - name: Run tests
+        run: |
+          # 替換成你的測試執行方式，例如 pytest 或 unittest
+          # pytest .
+          python -m unittest discover src
+      # Login Docker registry（若需要 push 至私有/公有 registry，可以在這裡做 docker login）
+      # - name: Log in to registry
+      #   run: |
+      #     echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login -u ${{ secrets.REGISTRY_USERNAME }} --password-stdin
+      - name: Build images via Docker
+        run: |
+          docker build -t my-detect-image:latest -f detect.Dockerfile .
+          docker build -t my-web-image:latest -f web.Dockerfile .
+
+# (可選) 如果要使用 docker-compose 進行整合測試，請取消下列區塊的註解
+# - name: Build and run services with docker-compose
+#   run: |
+#     docker-compose build
+#     docker-compose up -d
+#
+# - name: Integration tests
+#   run: |
+#     # 這裡放整合測試邏輯，例如透過 curl/webdriver/自訂程式確認服務是否運作正常
+#     # 可執行:
+#     # docker-compose exec web python -m unittest discover
+#     # 或針對 detect container 做相應測試
+#
+# - name: Tear down services
+#   if: always()
+#   run: docker-compose down
+
+# (可選) Push Docker image to registry
+# - name: Push to registry
+#   run: |
+#     docker push my-detect-image:latest
+#     docker push my-web-image:latest

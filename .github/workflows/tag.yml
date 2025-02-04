@@ -1,0 +1,53 @@
+name: Auto Tag on Main Update
+on:
+  push:
+    branches:
+      - main
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Set Git user
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+      - name: Get latest tag
+        id: get_latest_tag
+        run: |
+          # Format: vX.Y.Z
+          latest_tag=$(git tag -l "v*" --sort=-v:refname | grep -E "^v[0-9]+\.[0-9]+\.[0-9]+$" | head -n 1)
+
+          if [ -z "$latest_tag" ]; then
+            echo "No existing tag found. Using v0.0.0 as the base."
+            latest_tag="v0.0.0"
+          fi
+
+          echo "Latest tag is $latest_tag"
+          echo "::set-output name=LATEST_TAG::$latest_tag"
+      - name: Calculate next tag
+        id: calculate_next_tag
+        run: |
+          latest_tag=${{ steps.get_latest_tag.outputs.LATEST_TAG }}
+          version=${latest_tag#v}
+          IFS='.' read -r major minor patch <<< "$version"
+
+          # add patch version
+          patch=$((patch + 1))
+
+          next_tag="v$major.$minor.$patch"
+          echo "Next tag will be $next_tag"
+          echo "::set-output name=NEXT_TAG::$next_tag"
+      - name: Create new tag
+        run: |
+          next_tag=${{ steps.calculate_next_tag.outputs.NEXT_TAG }}
+          git tag $next_tag
+          echo "Created tag $next_tag"
+      - name: Push tag to repository
+        uses: ad-m/github-push-action@v0.6.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          tags: true
