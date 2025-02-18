@@ -14,7 +14,7 @@ run:						## Run all the application
 
 .PHONY: build
 build:						## Build the docker image
-	@docker compose build -f docker-compose-dev.yml
+	@docker compose -f docker-compose.yml build
 
 .PHONY: stop
 stop:						## Stop the application
