@@ -28,8 +28,9 @@ services:
       - ./static:/app/static
       - ./src/detect.py:/app/detect.py
       - .env:/app/.env
+    privileged: true
     devices:
-      - "${DEV_VIDEO}:${DEV_VIDEO}"
+      - /dev:/dev
     depends_on:
       - web
   mysql:

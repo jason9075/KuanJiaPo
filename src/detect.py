@@ -12,7 +12,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 FRAME_PATH = "./static/screenshot/frame.jpg"
-VIDEO_SOURCE = int(os.getenv("VIDEO_SOURCE"))
 SAVE_API_URL = os.getenv("SAVE_API_URL", "")
 INTERVAL_SEC = int(os.getenv("INTERVAL_SEC"))
 PERSON_INTERVAL_MIN = int(os.getenv("PERSON_INTERVAL_MIN"))
@@ -54,7 +53,20 @@ def save_event(frame, bbox, confidence):
 
 
 def detect_faces():
-    cap = cv2.VideoCapture(VIDEO_SOURCE)
+    video_sources = [0, 1, 2, 3]
+    cap = None
+
+    for source in video_sources:
+        cap = cv2.VideoCapture(source)
+        if cap.isOpened():
+            print(f"Using video source {source}")
+            break
+        cap.release()
+        cap = None
+
+    if cap is None or not cap.isOpened():
+        print("No available video source found.")
+        return
 
     person_dict = {}
     last_frame_time = 0
@@ -63,6 +75,22 @@ def detect_faces():
         ret, frame = cap.read()
         if not ret:
             print("Failed to read from video source.")
+            cap.release()
+            time.sleep(0.1)
+
+            for source in video_sources:
+                cap = cv2.VideoCapture(source)
+                if cap.isOpened():
+                    print(f"Using video source {source}")
+                    break
+                cap.release()
+                cap = None
+
+            if cap is None or not cap.isOpened():
+                print("No available video source found.")
+                time.sleep(5)
+                continue
+
             time.sleep(0.1)
             continue
 
