@@ -46,6 +46,8 @@ async def home():
 
 @app.get("/api/events")
 async def get_events(page: int = Query(0), size: int = Query(30)):
+    ensure_db_connection()
+
     offset = page * size
     events = []
     with db.cursor(MySQLdb.cursors.DictCursor) as cursor:
@@ -95,5 +97,25 @@ async def save_event(request: Request):
     return JSONResponse({"message": "Event saved successfully"})
 
 
-if __name__ == "__main__":
+def ensure_db_connection():
+    global db
+    try:
+        db.ping(reconnect=True)
+    except MySQLdb.OperationalError:
+        # 如果 ping 失敗，可在這裡做更進一步的錯誤處理或重新連線
+        # 不建議在 except 裡直接 db.ping(reconnect=True)，因為會造成無窮重試
+        db.close()
+        db = MySQLdb.connect(
+            host=os.getenv("MYSQL_HOST"),
+            user=os.getenv("MYSQL_USER"),
+            password=os.getenv("MYSQL_PASSWORD"),
+            database=os.getenv("MYSQL_DATABASE"),
+        )
+
+
+def main():
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
+
+if __name__ == "__main__":
+    main()
