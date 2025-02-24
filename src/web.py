@@ -100,7 +100,7 @@ async def save_event(request: Request):
 def ensure_db_connection():
     global db
     try:
-        db.ping(reconnect=True)
+        db.ping()
     except MySQLdb.OperationalError:
         # 如果 ping 失敗，可在這裡做更進一步的錯誤處理或重新連線
         # 不建議在 except 裡直接 db.ping(reconnect=True)，因為會造成無窮重試
