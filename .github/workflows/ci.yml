@@ -37,10 +37,10 @@ jobs:
         run: |
           docker run --rm -v ${{ github.workspace }}:/app my-detect-image:latest python -m unittest discover -s tests
 
-      - name: Build and run services with docker-compose
+      - name: Build and run services with docker compose
         run: |
           cat <<'EOF' > .env
-          MYSQL_ROOT_PASSWORD=root
+          MYSQL_ROOT_PASSWORD=changeme
           MYSQL_DATABASE=kuanjiapo
           MYSQL_USER=kuanjiapo
           MYSQL_PASSWORD=kuanjiapo
@@ -48,16 +48,16 @@ jobs:
           PERSON_INTERVAL_MIN=1
           FACE_CONF_THR=0.6
           EOF
-          docker-compose build
-          docker-compose up -d
+          docker compose build
+          docker compose up -d
           sleep 10
-          docker-compose ps
-          if docker-compose ps | grep -E '(Exit|exited)'; then
+          docker compose ps
+          if docker compose ps | grep -E '(Exit|exited)'; then
             echo "Some containers have exited unexpectedly" >&2
             exit 1
           fi
 
       - name: Tear down services
         if: always()
-        run: docker-compose down -v
+        run: docker compose down -v
 
