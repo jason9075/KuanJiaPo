@@ -5,11 +5,19 @@ import cv2
 import os
 from deepface import DeepFace
 import numpy as np
+from prometheus_client import Counter, start_http_server
 from datetime import datetime, timedelta
 import requests
 from dotenv import load_dotenv
 
 load_dotenv()
+
+# Prometheus counters
+NEW_PERSON_COUNTER = Counter("new_person_total", "Number of new persons detected")
+DETECTION_ERROR_COUNTER = Counter(
+    "detection_errors_total", "Number of detection errors"
+)
+FRAMES_PROCESSED = Counter("frames_processed_total", "Frames processed")
 
 FRAME_PATH = "./static/screenshot/frame.jpg"
 SAVE_API_URL = os.getenv("SAVE_API_URL", "")
@@ -53,6 +61,7 @@ def save_event(frame, bbox, confidence):
 
 
 def detect_faces():
+    start_http_server(8001)
     video_sources = [0, 1, 2, 3]
     cap = None
 
@@ -66,6 +75,7 @@ def detect_faces():
 
     if cap is None or not cap.isOpened():
         print("No available video source found.")
+        DETECTION_ERROR_COUNTER.inc()
         return
 
     person_dict = {}
@@ -73,8 +83,11 @@ def detect_faces():
 
     while True:
         ret, frame = cap.read()
+        if ret:
+            FRAMES_PROCESSED.inc()
         if not ret:
             print("Failed to read from video source.")
+            DETECTION_ERROR_COUNTER.inc()
             cap.release()
             time.sleep(0.1)
 
@@ -88,6 +101,7 @@ def detect_faces():
 
             if cap is None or not cap.isOpened():
                 print("No available video source found.")
+                DETECTION_ERROR_COUNTER.inc()
                 time.sleep(5)
                 continue
 
@@ -116,6 +130,7 @@ def detect_faces():
             )
         except Exception as e:
             print(f"Detection error: {e}")
+            DETECTION_ERROR_COUNTER.inc()
             continue
 
         if isinstance(detections, dict):
@@ -142,6 +157,7 @@ def detect_faces():
                 new_person = Person(face_vector)
                 person_dict[new_person.uuid] = new_person
                 save_event(frame, face_area, confidence)
+                NEW_PERSON_COUNTER.inc()
                 print(f"New person detected: {new_person.uuid}")
 
         time.sleep(0.1)  # Avoid busy waiting

@@ -26,6 +26,7 @@ fastapi_staticfiles.StaticFiles = MagicMock()
 fastapi_responses = types.ModuleType("fastapi.responses")
 fastapi_responses.HTMLResponse = MagicMock()
 fastapi_responses.JSONResponse = MagicMock()
+fastapi_responses.Response = MagicMock()
 
 sys.modules.setdefault("fastapi", fastapi_stub)
 sys.modules.setdefault("fastapi.staticfiles", fastapi_staticfiles)
@@ -34,6 +35,16 @@ sys.modules.setdefault("fastapi.responses", fastapi_responses)
 uvicorn_stub = types.ModuleType("uvicorn")
 uvicorn_stub.run = MagicMock()
 sys.modules.setdefault("uvicorn", uvicorn_stub)
+
+dotenv_stub = types.ModuleType("dotenv")
+dotenv_stub.load_dotenv = lambda: None
+sys.modules.setdefault("dotenv", dotenv_stub)
+
+prometheus_stub = types.ModuleType("prometheus_client")
+prometheus_stub.Counter = MagicMock(return_value=MagicMock())
+prometheus_stub.generate_latest = MagicMock(return_value=b"")
+prometheus_stub.CONTENT_TYPE_LATEST = "text/plain"
+sys.modules["prometheus_client"] = prometheus_stub
 
 import src.web as web
 

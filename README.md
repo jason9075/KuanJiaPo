@@ -8,7 +8,7 @@ frontend for viewing the latest frame as well as previously captured events.
 
 - Face detection powered by [DeepFace](https://github.com/serengil/deepface)
 - FastAPI web API with a small HTML/JS interface
-- MySQL database with initialization script under `mysql_init`
+- MySQL database with initialization script under `config/mysql_init`
 - Docker Compose setup for the detector, web server and database
 - Optional `nix develop` shell for local development
 
@@ -37,6 +37,13 @@ FACE_CONF_THR=0.6
 also uses `SAVE_API_URL` to post events to the web API, which is already set to
 `http://web:8000/api/save` when running through Docker Compose.
 
+## Monitoring
+
+The stack includes Prometheus and Grafana. Prometheus scrapes metrics from the
+web server on port `8000/metrics` and from the detector on port `8001`. Grafana
+is exposed on `http://localhost:3000` with Prometheus configured as a data
+source.
+
 ## Running
 
 Start the entire stack in the background using the Makefile target:
@@ -47,7 +54,8 @@ make dev
 
 This command simply invokes Docker Compose as defined in
 `docker-compose.yml`.  After the containers are up you can reach the web UI at
-`http://localhost:8000` and phpMyAdmin at `http://localhost:8081`.
+`http://localhost:8000`, phpMyAdmin at `http://localhost:8081`, Prometheus at
+`http://localhost:9090` and Grafana at `http://localhost:3000`.
 
 To stop and remove the containers use:
 
@@ -74,7 +82,8 @@ The shell hook creates a virtual environment and installs the dependencies from
 - `docker-compose.yml` – orchestrates the services
 - `Dockerfile` – base image used for both web and detector services
 - `Dockerfile.dev` – development image with hot reload using entr
-- `mysql_init/` – database initialization SQL
+- `config/prometheus.yml` – Prometheus scrape configuration
+- `config/mysql_init/` – database initialization SQL
 - `Makefile` – convenience targets for running and building the project
 
 ## License

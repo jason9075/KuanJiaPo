@@ -1,7 +1,9 @@
 from pathlib import Path
 from fastapi import FastAPI, Request, Query
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, Response
+
+from prometheus_client import Counter, generate_latest, CONTENT_TYPE_LATEST
 
 import uvicorn
 import MySQLdb
@@ -11,6 +13,10 @@ import time
 from dotenv import load_dotenv
 
 load_dotenv()
+
+# Prometheus counters
+PAGE_VIEWS = Counter("page_views_total", "Total number of page views")
+EVENTS_SAVED = Counter("events_saved_total", "Total number of events saved")
 
 # Database connection setup
 
@@ -38,8 +44,15 @@ app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
+@app.get("/metrics")
+async def metrics():
+    data = generate_latest()
+    return Response(content=data, media_type=CONTENT_TYPE_LATEST)
+
+
 @app.get("/", response_class=HTMLResponse)
 async def home():
+    PAGE_VIEWS.inc()
     html_file = Path("static/index.html")
     return HTMLResponse(content=html_file.read_text(), status_code=200)
 
@@ -93,6 +106,8 @@ async def save_event(request: Request):
     )
     db.commit()
     cursor.close()
+
+    EVENTS_SAVED.inc()
 
     return JSONResponse({"message": "Event saved successfully"})
 
