@@ -33,26 +33,31 @@ jobs:
         run: |
           docker build -t my-detect-image:latest -f Dockerfile .
           docker build -t my-web-image:latest -f Dockerfile .
+      - name: Run tests inside Docker
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/app my-detect-image:latest python -m unittest discover -s tests
 
-# (可選) 如果要使用 docker-compose 進行整合測試，請取消下列區塊的註解
-# - name: Build and run services with docker-compose
-#   run: |
-#     docker-compose build
-#     docker-compose up -d
-#
-# - name: Integration tests
-#   run: |
-#     # 這裡放整合測試邏輯，例如透過 curl/webdriver/自訂程式確認服務是否運作正常
-#     # 可執行:
-#     # docker-compose exec web python -m unittest discover
-#     # 或針對 detect container 做相應測試
-#
-# - name: Tear down services
-#   if: always()
-#   run: docker-compose down
+      - name: Build and run services with docker compose
+        run: |
+          cat <<'EOF' > .env
+          MYSQL_ROOT_PASSWORD=changeme
+          MYSQL_DATABASE=kuanjiapo
+          MYSQL_USER=kuanjiapo
+          MYSQL_PASSWORD=kuanjiapo
+          INTERVAL_SEC=1
+          PERSON_INTERVAL_MIN=1
+          FACE_CONF_THR=0.6
+          EOF
+          docker compose build
+          docker compose up -d
+          sleep 10
+          docker compose ps
+          if docker compose ps | grep -E '(Exit|exited)'; then
+            echo "Some containers have exited unexpectedly" >&2
+            exit 1
+          fi
 
-# (可選) Push Docker image to registry
-# - name: Push to registry
-#   run: |
-#     docker push my-detect-image:latest
-#     docker push my-web-image:latest
+      - name: Tear down services
+        if: always()
+        run: docker compose down -v
+
