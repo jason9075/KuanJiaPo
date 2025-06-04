@@ -14,6 +14,27 @@ pytz_stub = types.ModuleType("pytz")
 pytz_stub.timezone = lambda *args, **kwargs: types.SimpleNamespace()
 sys.modules.setdefault("pytz", pytz_stub)
 
+# Stub FastAPI and related modules to avoid installing the real package
+fastapi_stub = types.ModuleType("fastapi")
+fastapi_stub.FastAPI = MagicMock()
+fastapi_stub.Request = object
+fastapi_stub.Query = lambda *args, **kwargs: None
+
+fastapi_staticfiles = types.ModuleType("fastapi.staticfiles")
+fastapi_staticfiles.StaticFiles = MagicMock()
+
+fastapi_responses = types.ModuleType("fastapi.responses")
+fastapi_responses.HTMLResponse = MagicMock()
+fastapi_responses.JSONResponse = MagicMock()
+
+sys.modules.setdefault("fastapi", fastapi_stub)
+sys.modules.setdefault("fastapi.staticfiles", fastapi_staticfiles)
+sys.modules.setdefault("fastapi.responses", fastapi_responses)
+
+uvicorn_stub = types.ModuleType("uvicorn")
+uvicorn_stub.run = MagicMock()
+sys.modules.setdefault("uvicorn", uvicorn_stub)
+
 import src.web as web
 
 mysql_stub.connect.reset_mock()
