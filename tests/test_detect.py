@@ -9,6 +9,16 @@ dummy_module = types.ModuleType("dummy")
 sys.modules.setdefault("cv2", dummy_module)
 sys.modules.setdefault("requests", dummy_module)
 
+prom_stub = types.ModuleType("prometheus_client")
+
+class DummyCounter:
+    def inc(self):
+        pass
+
+prom_stub.Counter = lambda *args, **kwargs: DummyCounter()
+prom_stub.start_http_server = lambda *args, **kwargs: None
+sys.modules["prometheus_client"] = prom_stub
+
 dotenv_stub = types.ModuleType("dotenv")
 dotenv_stub.load_dotenv = lambda: None
 sys.modules.setdefault("dotenv", dotenv_stub)

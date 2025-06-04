@@ -8,3 +8,4 @@ pytz
 requests
 tf-keras
 uvicorn
+prometheus-client
