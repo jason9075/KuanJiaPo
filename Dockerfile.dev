@@ -1,0 +1,21 @@
+FROM python:3.9-slim AS dev
+
+RUN apt-get update && apt-get install -y \
+    entr \
+    libgl1 \
+    libglib2.0-0 \
+    pkg-config \
+    default-libmysqlclient-dev \
+    gcc \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY src /app/src
+
+EXPOSE 8000
+
+CMD find src -type f -name '*.py' | entr -r uvicorn web:app --host 0.0.0.0 --port 8000

@@ -2,9 +2,10 @@ services:
   web:
     build:
       context: .
-      dockerfile: web.Dockerfile
+      dockerfile: Dockerfile
     container_name: kuanjiapo_web
     restart: always
+    command: uvicorn web:app --host 0.0.0.0 --port 8000
     ports:
       - "8000:8000"
     env_file:
@@ -19,9 +20,10 @@ services:
   detect:
     build:
       context: .
-      dockerfile: detect.Dockerfile
+      dockerfile: Dockerfile
     container_name: kuanjiapo_detect
     restart: always
+    command: python detect.py
     environment:
       SAVE_API_URL: "http://web:8000/api/save"
     volumes:

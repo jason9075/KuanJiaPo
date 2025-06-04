@@ -1,7 +1,0 @@
-python-dotenv
-fastapi
-uvicorn
-mysqlclient
-pillow
-requests
-pytz

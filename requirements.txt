@@ -1,5 +1,10 @@
 deepface
-opencv-python
-tf-keras
-python-dotenv
+fastapi
 mysqlclient
+opencv-python
+pillow
+python-dotenv
+pytz
+requests
+tf-keras
+uvicorn

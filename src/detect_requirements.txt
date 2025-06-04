@@ -1,6 +1,0 @@
-deepface
-opencv-python
-tf-keras
-python-dotenv
-pillow
-requests
