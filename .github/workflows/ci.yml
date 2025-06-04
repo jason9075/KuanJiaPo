@@ -23,9 +23,8 @@ jobs:
       # 假設你會使用 unittest 或 pytest 作測試，可視你的實際測試架構而調整
       - name: Run tests
         run: |
-          # 替換成你的測試執行方式，例如 pytest 或 unittest
-          # pytest .
-          python -m unittest discover src
+          # 使用 unittest 執行 tests 目錄下的測試
+          python -m unittest discover -s tests
       # Login Docker registry（若需要 push 至私有/公有 registry，可以在這裡做 docker login）
       # - name: Log in to registry
       #   run: |
