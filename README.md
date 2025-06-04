@@ -8,7 +8,7 @@ frontend for viewing the latest frame as well as previously captured events.
 
 - Face detection powered by [DeepFace](https://github.com/serengil/deepface)
 - FastAPI web API with a small HTML/JS interface
-- MySQL database with initialization script under `mysql_init`
+- MySQL database with initialization script under `config/mysql_init`
 - Docker Compose setup for the detector, web server and database
 - Optional `nix develop` shell for local development
 
@@ -82,8 +82,8 @@ The shell hook creates a virtual environment and installs the dependencies from
 - `docker-compose.yml` – orchestrates the services
 - `Dockerfile` – base image used for both web and detector services
 - `Dockerfile.dev` – development image with hot reload using entr
-- `prometheus.yml` – Prometheus scrape configuration
-- `mysql_init/` – database initialization SQL
+- `config/prometheus.yml` – Prometheus scrape configuration
+- `config/mysql_init/` – database initialization SQL
 - `Makefile` – convenience targets for running and building the project
 
 ## License

@@ -46,7 +46,7 @@ services:
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./mysql_init:/docker-entrypoint-initdb.d
+      - ./config/mysql_init:/docker-entrypoint-initdb.d
     ports:
       - "3306:3306"
   phpmyadmin:
@@ -63,7 +63,7 @@ services:
   prometheus:
     image: prom/prometheus:latest
     volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
       - "9090:9090"
     depends_on:
