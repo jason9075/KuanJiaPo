@@ -31,8 +31,8 @@ jobs:
       #     echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login -u ${{ secrets.REGISTRY_USERNAME }} --password-stdin
       - name: Build images via Docker
         run: |
-          docker build -t my-detect-image:latest -f detect.Dockerfile .
-          docker build -t my-web-image:latest -f web.Dockerfile .
+          docker build -t my-detect-image:latest -f Dockerfile .
+          docker build -t my-web-image:latest -f Dockerfile .
 
 # (可選) 如果要使用 docker-compose 進行整合測試，請取消下列區塊的註解
 # - name: Build and run services with docker-compose

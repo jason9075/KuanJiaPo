@@ -3,7 +3,8 @@
 .PHONY: dev
 dev:						## Run the application in development mode
 	@echo "Running the application in development mode..."
-	@docker compose -f docker-compose.yml up -d
+	@docker build -f Dockerfile.dev -t kuanjiapo_dev .
+	@docker run --rm -p 8000:8000 -v $(CURDIR)/src:/app/src --env-file .env kuanjiapo_dev
 
 .PHONY: run
 run:						## Run all the application

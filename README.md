@@ -72,8 +72,8 @@ The shell hook creates a virtual environment and installs the dependencies from
 - `src/` – Python sources (`web.py` and `detect.py`)
 - `static/` – HTML, CSS and JavaScript for the frontend
 - `docker-compose.yml` – orchestrates the services
-- `web.Dockerfile` and `detect.Dockerfile` – images for the web service and
-detector
+- `Dockerfile` – base image used for both web and detector services
+- `Dockerfile.dev` – development image with hot reload using entr
 - `mysql_init/` – database initialization SQL
 - `Makefile` – convenience targets for running and building the project
 
