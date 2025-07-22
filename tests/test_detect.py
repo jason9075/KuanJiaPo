@@ -11,9 +11,11 @@ sys.modules.setdefault("requests", dummy_module)
 
 prom_stub = types.ModuleType("prometheus_client")
 
+
 class DummyCounter:
     def inc(self):
         pass
+
 
 prom_stub.Counter = lambda *args, **kwargs: DummyCounter()
 prom_stub.start_http_server = lambda *args, **kwargs: None
@@ -31,6 +33,7 @@ os.environ.setdefault("INTERVAL_SEC", "1")
 os.environ.setdefault("PERSON_INTERVAL_MIN", "1")
 os.environ.setdefault("FACE_CONF_THR", "0.5")
 
+
 class SimpleNP:
     @staticmethod
     def dot(a, b):
@@ -41,6 +44,7 @@ class SimpleNP:
         def norm(v):
             return sum(x * x for x in v) ** 0.5
 
+
 sys.modules.setdefault("numpy", SimpleNP)
 import numpy as np  # noqa: E402
 
@@ -48,6 +52,7 @@ from src import detect
 
 is_similar = detect.is_similar
 Person = detect.Person
+
 
 class TestIsSimilar(unittest.TestCase):
     def test_identical_vectors(self):
@@ -60,10 +65,12 @@ class TestIsSimilar(unittest.TestCase):
         v2 = [0.0, -1.0, 0.0]
         self.assertFalse(is_similar(v1, v2))
 
+
 class TestPerson(unittest.TestCase):
     def test_person_uuid(self):
         person = Person([0.1, 0.2, 0.3])
         self.assertIsInstance(person.uuid, str)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

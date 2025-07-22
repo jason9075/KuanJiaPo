@@ -145,7 +145,9 @@ class ConnectionManager:
             if connection is not sender:
                 await connection.send_text(message)
 
+
 manager = ConnectionManager()
+
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
@@ -159,7 +161,15 @@ async def websocket_endpoint(websocket: WebSocket):
 
 
 def main():
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    certfile = os.getenv("SSL_CERTFILE")
+    keyfile = os.getenv("SSL_KEYFILE")
+    uvicorn.run(
+        app,
+        host="0.0.0.0",
+        port=8000,
+        ssl_certfile=certfile,
+        ssl_keyfile=keyfile,
+    )
 
 
 if __name__ == "__main__":

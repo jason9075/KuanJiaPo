@@ -32,6 +32,9 @@ MYSQL_PASSWORD=kuanjiapo
 INTERVAL_SEC=5
 PERSON_INTERVAL_MIN=10
 FACE_CONF_THR=0.6
+# https certificate (optional)
+SSL_CERTFILE=./certs/server.crt
+SSL_KEYFILE=./certs/server.key
 ```
 
 `docker-compose.yml` injects these values into the containers.  The detector
@@ -63,6 +66,31 @@ To stop and remove the containers use:
 ```bash
 make stop
 ```
+
+## HTTPS Setup
+
+The web server can run over HTTPS by providing a certificate and key. Docker
+Compose expects them at `./certs/server.crt` and `./certs/server.key`. You can
+create your own certificate authority (CA) and sign the server certificate:
+
+```bash
+# generate CA
+openssl genrsa -out certs/ca.key 2048
+openssl req -x509 -new -nodes -key certs/ca.key -days 3650 -out certs/ca.crt -subj "/CN=My Local CA"
+
+# generate server certificate signed by the CA
+openssl genrsa -out certs/server.key 2048
+openssl req -new -key certs/server.key -out certs/server.csr -subj "/CN=localhost"
+openssl x509 -req -in certs/server.csr -CA certs/ca.crt -CAkey certs/ca.key -CAcreateserial -out certs/server.crt -days 365
+```
+
+On Windows, open `mmc.exe`, add the "Certificates" snap-in for the local
+computer and import `ca.crt` under "Trusted Root Certification Authorities".
+For Android, copy `ca.crt` to the device and install it via
+**Settings → Security → Encryption & credentials → Install a certificate → CA certificate**.
+
+After placing the files, run `make dev` again and browse to
+`https://localhost:8000`.
 
 ## Development with Nix
 

@@ -53,6 +53,7 @@ import src.web as web
 
 mysql_stub.connect.reset_mock()
 
+
 class TestEnsureDbConnection(unittest.TestCase):
     def test_reconnect_on_operational_error(self):
         mock_db = MagicMock()
@@ -90,5 +91,6 @@ class TestConnectionManager(unittest.TestCase):
         self.assertEqual(ws1.sent, [])
         self.assertEqual(ws2.sent, ["hello"])
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()
