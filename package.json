@@ -1,0 +1,26 @@
+{
+  "name": "kuanjiapo",
+  "version": "1.0.0",
+  "description": "KuanJiaPo is a small experiment that detects faces from a camera and stores those events in a MySQL database. A FastAPI web service provides a simple frontend for viewing the latest frame as well as previously captured events.",
+  "main": "puppeteer-client.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jason9075/KuanJiaPo.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jason9075/KuanJiaPo/issues"
+  },
+  "homepage": "https://github.com/jason9075/KuanJiaPo#readme",
+  "dependencies": {
+    "puppeteer": "^24.14.0"
+  }
+}
