@@ -1,5 +1,7 @@
 from pathlib import Path
 from typing import Set
+import json
+import asyncio
 from fastapi import FastAPI, Request, Query, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, JSONResponse, Response
@@ -13,7 +15,33 @@ import pytz
 import time
 from dotenv import load_dotenv
 
+try:
+    from aiortc import RTCPeerConnection, RTCSessionDescription
+    from aiortc.contrib.media import MediaPlayer, MediaRecorder, MediaRelay
+except Exception:  # pragma: no cover - optional dependency
+    RTCPeerConnection = None
+    RTCSessionDescription = None
+    MediaPlayer = None
+    MediaRecorder = None
+    MediaRelay = None
+
 load_dotenv()
+
+VOICE_ENABLED = os.getenv("VOICE_ENABLED", "0") == "1" and RTCPeerConnection
+player = None
+recorder = None
+relay = None
+pcs = {}
+tracks = []
+
+if VOICE_ENABLED:
+    try:
+        player = MediaPlayer(os.getenv("VOICE_INPUT_DEVICE", "default"))
+        recorder = MediaRecorder(os.getenv("VOICE_OUTPUT_DEVICE", "default"))
+        relay = MediaRelay()
+    except Exception as e:  # pragma: no cover - optional hardware
+        print("Voice setup failed:", e)
+        VOICE_ENABLED = False
 
 # Prometheus counters
 PAGE_VIEWS = Counter("page_views_total", "Total number of page views")
@@ -149,15 +177,75 @@ class ConnectionManager:
 manager = ConnectionManager()
 
 
+async def _renegotiate(pc: RTCPeerConnection, ws: WebSocket):
+    offer = await pc.createOffer()
+    await pc.setLocalDescription(offer)
+    await ws.send_text(
+        json.dumps({"type": "offer", "sdp": {
+            "type": pc.localDescription.type,
+            "sdp": pc.localDescription.sdp,
+        }})
+    )
+
+
+async def _handle_signal(pc: RTCPeerConnection, ws: WebSocket, data: str):
+    msg = json.loads(data)
+    mtype = msg.get("type")
+    if mtype == "offer":
+        desc = msg["sdp"]
+        await pc.setRemoteDescription(RTCSessionDescription(**desc))
+        if player and player.audio:
+            pc.addTrack(player.audio)
+        for t in tracks:
+            pc.addTrack(relay.subscribe(t) if relay else t)
+        answer = await pc.createAnswer()
+        await pc.setLocalDescription(answer)
+        await ws.send_text(
+            json.dumps({"type": "answer", "sdp": {
+                "type": pc.localDescription.type,
+                "sdp": pc.localDescription.sdp,
+            }})
+        )
+    elif mtype == "answer":
+        desc = msg["sdp"]
+        await pc.setRemoteDescription(RTCSessionDescription(**desc))
+    elif mtype == "candidate":
+        await pc.addIceCandidate(msg["candidate"])
+
+
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await manager.connect(websocket)
+    pc = None
+    if VOICE_ENABLED:
+        pc = RTCPeerConnection()
+        pcs[websocket] = pc
+
+        @pc.on("track")
+        async def on_track(track):
+            if track.kind == "audio":
+                if recorder:
+                    recorder.addTrack(track)
+                    await recorder.start()
+                relay_track = relay.subscribe(track) if relay else track
+                tracks.append(relay_track)
+                for ws, other_pc in pcs.items():
+                    if other_pc is pc:
+                        continue
+                    other_pc.addTrack(relay.subscribe(track) if relay else track)
+                    await _renegotiate(other_pc, ws)
+
     try:
         while True:
             data = await websocket.receive_text()
             await manager.broadcast(data, websocket)
+            if pc:
+                await _handle_signal(pc, websocket, data)
     except WebSocketDisconnect:
         manager.disconnect(websocket)
+        if pc:
+            await pc.close()
+            pcs.pop(websocket, None)
 
 
 def main():
