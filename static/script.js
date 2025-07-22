@@ -6,6 +6,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const eventList = document.getElementById("event-list");
     const liveImage = document.getElementById("live-image");
     const callBtn = document.getElementById("call-btn");
+    const callIcon = document.getElementById("call-icon");
     const remoteAudio = document.getElementById("remote-audio");
     const params = new URLSearchParams(window.location.search);
     const autoCall = ["1", "true"].includes(params.get("autocall"));
@@ -201,7 +202,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         // keep websocket alive for presence tracking
         remoteAudio.srcObject = null;
-        callBtn.textContent = "📞";
+        callIcon.textContent = "📞";
         callBtn.disabled = false;
         isCalling = false;
     }
@@ -216,7 +217,7 @@ document.addEventListener("DOMContentLoaded", () => {
             JSON.stringify({ type: "offer", sdp: pc.localDescription })
         );
         callBtn.disabled = false;
-        callBtn.textContent = "📴";
+        callIcon.textContent = "📴";
         isCalling = true;
     }
 
