@@ -7,6 +7,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const liveImage = document.getElementById("live-image");
     const callBtn = document.getElementById("call-btn");
     const remoteAudio = document.getElementById("remote-audio");
+    const params = new URLSearchParams(window.location.search);
+    const autoCall = ["1", "true"].includes(params.get("autocall"));
 
     let ws;
     let pc;
@@ -222,4 +224,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
         ws.onclose = cleanupCall;
     });
+
+    // Automatically initiate the call based on the URL parameter
+    if (autoCall) {
+        callBtn.click();
+    }
 });
