@@ -11,6 +11,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let ws;
     let pc;
     let localStream;
+    let isCalling = false;
 
     let currentPage = 0;
     const pageSize = 30;
@@ -151,7 +152,31 @@ document.addEventListener("DOMContentLoaded", () => {
         };
     }
 
+    function cleanupCall() {
+        if (localStream) {
+            localStream.getTracks().forEach((t) => t.stop());
+            localStream = null;
+        }
+        if (pc) {
+            pc.close();
+            pc = null;
+        }
+        if (ws) {
+            ws.close();
+            ws = null;
+        }
+        remoteAudio.srcObject = null;
+        callBtn.textContent = "📞";
+        callBtn.disabled = false;
+        isCalling = false;
+    }
+
     callBtn.addEventListener("click", async () => {
+        if (isCalling) {
+            cleanupCall();
+            return;
+        }
+
         callBtn.disabled = true;
         const protocol = location.protocol === "https:" ? "wss" : "ws";
         ws = new WebSocket(`${protocol}://${location.host}/ws`);
@@ -190,6 +215,11 @@ document.addEventListener("DOMContentLoaded", () => {
             ws.send(
                 JSON.stringify({ type: "offer", sdp: pc.localDescription })
             );
+            callBtn.disabled = false;
+            callBtn.textContent = "📴";
+            isCalling = true;
         };
+
+        ws.onclose = cleanupCall;
     });
 });
