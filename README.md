@@ -11,6 +11,7 @@ frontend for viewing the latest frame as well as previously captured events.
 - MySQL database with initialization script under `config/mysql_init`
 - Docker Compose setup for the detector, web server and database
 - Optional `nix develop` shell for local development
+- Experimental two-way voice chat using WebRTC
 
 ## Requirements
 
