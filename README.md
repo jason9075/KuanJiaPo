@@ -12,6 +12,7 @@ frontend for viewing the latest frame as well as previously captured events.
 - Docker Compose setup for the detector, web server and database
 - Optional `nix develop` shell for local development
 - Experimental two-way voice chat using WebRTC
+- Append `?autocall=true` to automatically start the voice call
 
 ## Requirements
 
