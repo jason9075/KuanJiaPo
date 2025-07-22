@@ -24,6 +24,10 @@ SAVE_API_URL = os.getenv("SAVE_API_URL", "")
 INTERVAL_SEC = int(os.getenv("INTERVAL_SEC"))
 PERSON_INTERVAL_MIN = int(os.getenv("PERSON_INTERVAL_MIN"))
 FACE_CONF_THR = float(os.getenv("FACE_CONF_THR"))
+OFF_HOURS_INTERVAL_SEC = int(
+    os.getenv("OFF_HOURS_INTERVAL_SEC", str(INTERVAL_SEC * 3))
+)
+FRAME_DIFF_THR = float(os.getenv("FRAME_DIFF_THR", "15"))
 
 
 class Person:
@@ -80,6 +84,7 @@ def detect_faces():
 
     person_dict = {}
     last_frame_time = 0
+    prev_frame = None
 
     while True:
         ret, frame = cap.read()
@@ -113,12 +118,27 @@ def detect_faces():
         cv2.imwrite(temp_frame_path, frame)
         os.replace(temp_frame_path, FRAME_PATH)
 
-        if time.time() - last_frame_time < INTERVAL_SEC:
+        current_hour = datetime.now().hour
+        interval = INTERVAL_SEC if 6 <= current_hour < 24 else OFF_HOURS_INTERVAL_SEC
+
+        if time.time() - last_frame_time < interval:
             time.sleep(0.1)  # Avoid busy waiting
+            prev_frame = frame
             continue
+
+        if prev_frame is not None:
+            gray_prev = cv2.cvtColor(prev_frame, cv2.COLOR_BGR2GRAY)
+            gray_curr = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            diff_val = cv2.absdiff(gray_prev, gray_curr).mean()
+            if diff_val < FRAME_DIFF_THR:
+                last_frame_time = time.time()
+                prev_frame = frame
+                time.sleep(0.1)
+                continue
 
         print(f"Number of people: {len(person_dict)}")
         last_frame_time = time.time()
+        prev_frame = frame
 
         frame_copy = frame.copy()
         try:
