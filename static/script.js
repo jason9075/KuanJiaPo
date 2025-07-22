@@ -6,6 +6,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const eventList = document.getElementById("event-list");
     const liveImage = document.getElementById("live-image");
     const callBtn = document.getElementById("call-btn");
+    const callIcon = document.getElementById("call-icon");
     const remoteAudio = document.getElementById("remote-audio");
     const params = new URLSearchParams(window.location.search);
     const autoCall = ["1", "true"].includes(params.get("autocall"));
@@ -14,6 +15,42 @@ document.addEventListener("DOMContentLoaded", () => {
     let pc;
     let localStream;
     let isCalling = false;
+
+    const countBadge = document.getElementById("ws-count");
+
+    const protocol = location.protocol === "https:" ? "wss" : "ws";
+    ws = new WebSocket(`${protocol}://${location.host}/ws`);
+
+    ws.onmessage = async (evt) => {
+        const msg = JSON.parse(evt.data);
+        if (msg.type === "count") {
+            countBadge.textContent = msg.count;
+        } else if (msg.type === "offer") {
+            await createPeer();
+            await pc.setRemoteDescription(msg.sdp);
+            localStream = await navigator.mediaDevices.getUserMedia({
+                audio: true,
+            });
+            localStream.getTracks().forEach((t) => pc.addTrack(t, localStream));
+            const ans = await pc.createAnswer();
+            await pc.setLocalDescription(ans);
+            ws.send(
+                JSON.stringify({ type: "answer", sdp: pc.localDescription })
+            );
+        } else if (msg.type === "answer") {
+            await pc.setRemoteDescription(msg.sdp);
+        } else if (msg.type === "candidate") {
+            try {
+                await pc.addIceCandidate(msg.candidate);
+            } catch (err) {
+                console.error(err);
+            }
+        }
+    };
+
+    ws.onclose = () => {
+        cleanupCall();
+    };
 
     let currentPage = 0;
     const pageSize = 30;
@@ -163,14 +200,25 @@ document.addEventListener("DOMContentLoaded", () => {
             pc.close();
             pc = null;
         }
-        if (ws) {
-            ws.close();
-            ws = null;
-        }
+        // keep websocket alive for presence tracking
         remoteAudio.srcObject = null;
-        callBtn.textContent = "📞";
+        callIcon.textContent = "📞";
         callBtn.disabled = false;
         isCalling = false;
+    }
+
+    async function startCall() {
+        await createPeer();
+        localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        localStream.getTracks().forEach((t) => pc.addTrack(t, localStream));
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        ws.send(
+            JSON.stringify({ type: "offer", sdp: pc.localDescription })
+        );
+        callBtn.disabled = false;
+        callIcon.textContent = "📴";
+        isCalling = true;
     }
 
     callBtn.addEventListener("click", async () => {
@@ -180,49 +228,39 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         callBtn.disabled = true;
-        const protocol = location.protocol === "https:" ? "wss" : "ws";
-        ws = new WebSocket(`${protocol}://${location.host}/ws`);
-
-        ws.onmessage = async (evt) => {
-            const msg = JSON.parse(evt.data);
-            if (msg.type === "offer") {
-                await createPeer();
-                await pc.setRemoteDescription(msg.sdp);
-                localStream = await navigator.mediaDevices.getUserMedia({
-                    audio: true,
-                });
-                localStream.getTracks().forEach((t) => pc.addTrack(t, localStream));
-                const ans = await pc.createAnswer();
-                await pc.setLocalDescription(ans);
-                ws.send(
-                    JSON.stringify({ type: "answer", sdp: pc.localDescription })
-                );
-            } else if (msg.type === "answer") {
-                await pc.setRemoteDescription(msg.sdp);
-            } else if (msg.type === "candidate") {
-                try {
-                    await pc.addIceCandidate(msg.candidate);
-                } catch (err) {
-                    console.error(err);
+        if (ws.readyState === WebSocket.CONNECTING) {
+            ws.addEventListener("open", startCall, { once: true });
+        } else if (ws.readyState === WebSocket.OPEN) {
+            await startCall();
+        } else {
+            ws = new WebSocket(`${protocol}://${location.host}/ws`);
+            ws.onmessage = async (evt) => {
+                const msg = JSON.parse(evt.data);
+                if (msg.type === "count") {
+                    countBadge.textContent = msg.count;
+                } else if (msg.type === "offer") {
+                    await createPeer();
+                    await pc.setRemoteDescription(msg.sdp);
+                    localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    localStream.getTracks().forEach((t) => pc.addTrack(t, localStream));
+                    const ans = await pc.createAnswer();
+                    await pc.setLocalDescription(ans);
+                    ws.send(JSON.stringify({ type: "answer", sdp: pc.localDescription }));
+                } else if (msg.type === "answer") {
+                    await pc.setRemoteDescription(msg.sdp);
+                } else if (msg.type === "candidate") {
+                    try {
+                        await pc.addIceCandidate(msg.candidate);
+                    } catch (err) {
+                        console.error(err);
+                    }
                 }
-            }
-        };
-
-        ws.onopen = async () => {
-            await createPeer();
-            localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            localStream.getTracks().forEach((t) => pc.addTrack(t, localStream));
-            const offer = await pc.createOffer();
-            await pc.setLocalDescription(offer);
-            ws.send(
-                JSON.stringify({ type: "offer", sdp: pc.localDescription })
-            );
-            callBtn.disabled = false;
-            callBtn.textContent = "📴";
-            isCalling = true;
-        };
-
-        ws.onclose = cleanupCall;
+            };
+            ws.onclose = () => {
+                cleanupCall();
+            };
+            ws.addEventListener("open", startCall, { once: true });
+        }
     });
 
     // Automatically initiate the call based on the URL parameter

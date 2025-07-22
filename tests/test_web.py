@@ -3,6 +3,7 @@ from unittest.mock import MagicMock
 import sys
 import types
 import asyncio
+import json
 
 # Provide stub for MySQLdb to avoid requiring the real library
 mysql_stub = types.ModuleType("MySQLdb")
@@ -88,8 +89,10 @@ class TestConnectionManager(unittest.TestCase):
         loop.run_until_complete(cm.connect(ws2))
         loop.run_until_complete(cm.broadcast("hello", ws1))
 
-        self.assertEqual(ws1.sent, [])
-        self.assertEqual(ws2.sent, ["hello"])
+        count1 = json.dumps({"type": "count", "count": 1})
+        count2 = json.dumps({"type": "count", "count": 2})
+        self.assertEqual(ws1.sent, [count1, count2])
+        self.assertEqual(ws2.sent, [count2, "hello"])
 
 
 if __name__ == "__main__":

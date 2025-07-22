@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import Set
+import json
 from fastapi import FastAPI, Request, Query, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, JSONResponse, Response
@@ -136,14 +137,21 @@ class ConnectionManager:
     async def connect(self, websocket: WebSocket):
         await websocket.accept()
         self.active_connections.add(websocket)
+        await self.send_count()
 
-    def disconnect(self, websocket: WebSocket):
+    async def disconnect(self, websocket: WebSocket):
         self.active_connections.discard(websocket)
+        await self.send_count()
 
     async def broadcast(self, message: str, sender: WebSocket):
         for connection in list(self.active_connections):
             if connection is not sender:
                 await connection.send_text(message)
+
+    async def send_count(self):
+        message = json.dumps({"type": "count", "count": len(self.active_connections)})
+        for connection in list(self.active_connections):
+            await connection.send_text(message)
 
 
 manager = ConnectionManager()
@@ -157,7 +165,7 @@ async def websocket_endpoint(websocket: WebSocket):
             data = await websocket.receive_text()
             await manager.broadcast(data, websocket)
     except WebSocketDisconnect:
-        manager.disconnect(websocket)
+        await manager.disconnect(websocket)
 
 
 def main():
