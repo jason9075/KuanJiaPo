@@ -177,3 +177,5 @@ static/screenshot/**
 !static/screenshot/.keep
 certs/**
 !certs/.gitkeep
+
+node_modules/
