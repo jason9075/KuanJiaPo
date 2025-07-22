@@ -7,5 +7,5 @@ python-dotenv
 pytz
 requests
 tf-keras
-uvicorn
+uvicorn[standard]
 prometheus-client
