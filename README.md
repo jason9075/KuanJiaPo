@@ -34,6 +34,8 @@ MYSQL_PASSWORD=kuanjiapo
 INTERVAL_SEC=5
 PERSON_INTERVAL_MIN=10
 FACE_CONF_THR=0.6
+OFF_HOURS_INTERVAL_SEC=15
+FRAME_DIFF_THR=15
 # https certificate (optional)
 SSL_CERTFILE=./certs/server.crt
 SSL_KEYFILE=./certs/server.key
