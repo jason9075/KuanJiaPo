@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import MagicMock
 import sys
 import types
+import asyncio
 
 # Provide stub for MySQLdb to avoid requiring the real library
 mysql_stub = types.ModuleType("MySQLdb")
@@ -19,6 +20,8 @@ fastapi_stub = types.ModuleType("fastapi")
 fastapi_stub.FastAPI = MagicMock()
 fastapi_stub.Request = object
 fastapi_stub.Query = lambda *args, **kwargs: None
+fastapi_stub.WebSocket = object
+fastapi_stub.WebSocketDisconnect = Exception
 
 fastapi_staticfiles = types.ModuleType("fastapi.staticfiles")
 fastapi_staticfiles.StaticFiles = MagicMock()
@@ -50,6 +53,7 @@ import src.web as web
 
 mysql_stub.connect.reset_mock()
 
+
 class TestEnsureDbConnection(unittest.TestCase):
     def test_reconnect_on_operational_error(self):
         mock_db = MagicMock()
@@ -61,5 +65,32 @@ class TestEnsureDbConnection(unittest.TestCase):
         mock_db.close.assert_called_once()
         mysql_stub.connect.assert_called_once()
 
-if __name__ == '__main__':
+
+class TestConnectionManager(unittest.TestCase):
+    def test_broadcast_excludes_sender(self):
+        cm = web.ConnectionManager()
+
+        class DummyWS:
+            def __init__(self):
+                self.sent = []
+
+            async def accept(self):
+                pass
+
+            async def send_text(self, msg):
+                self.sent.append(msg)
+
+        ws1 = DummyWS()
+        ws2 = DummyWS()
+
+        loop = asyncio.new_event_loop()
+        loop.run_until_complete(cm.connect(ws1))
+        loop.run_until_complete(cm.connect(ws2))
+        loop.run_until_complete(cm.broadcast("hello", ws1))
+
+        self.assertEqual(ws1.sent, [])
+        self.assertEqual(ws2.sent, ["hello"])
+
+
+if __name__ == "__main__":
     unittest.main()

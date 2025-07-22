@@ -175,3 +175,5 @@ cython_debug/
 
 static/screenshot/**
 !static/screenshot/.keep
+certs/**
+!certs/.gitkeep

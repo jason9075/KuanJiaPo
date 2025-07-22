@@ -1,5 +1,6 @@
 from pathlib import Path
-from fastapi import FastAPI, Request, Query
+from typing import Set
+from fastapi import FastAPI, Request, Query, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, JSONResponse, Response
 
@@ -128,8 +129,47 @@ def ensure_db_connection():
         )
 
 
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections: Set[WebSocket] = set()
+
+    async def connect(self, websocket: WebSocket):
+        await websocket.accept()
+        self.active_connections.add(websocket)
+
+    def disconnect(self, websocket: WebSocket):
+        self.active_connections.discard(websocket)
+
+    async def broadcast(self, message: str, sender: WebSocket):
+        for connection in list(self.active_connections):
+            if connection is not sender:
+                await connection.send_text(message)
+
+
+manager = ConnectionManager()
+
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await manager.connect(websocket)
+    try:
+        while True:
+            data = await websocket.receive_text()
+            await manager.broadcast(data, websocket)
+    except WebSocketDisconnect:
+        manager.disconnect(websocket)
+
+
 def main():
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    certfile = os.getenv("SSL_CERTFILE")
+    keyfile = os.getenv("SSL_KEYFILE")
+    uvicorn.run(
+        app,
+        host="0.0.0.0",
+        port=8000,
+        ssl_certfile=certfile,
+        ssl_keyfile=keyfile,
+    )
 
 
 if __name__ == "__main__":
