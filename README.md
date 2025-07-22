@@ -1,7 +1,7 @@
 # KuanJiaPo
 
 KuanJiaPo is a small experiment that detects faces from a camera and stores
-those events in a MySQL database.  A FastAPI web service provides a simple
+those events in a MySQL database. A FastAPI web service provides a simple
 frontend for viewing the latest frame as well as previously captured events.
 
 ## Features
@@ -37,7 +37,7 @@ SSL_CERTFILE=./certs/server.crt
 SSL_KEYFILE=./certs/server.key
 ```
 
-`docker-compose.yml` injects these values into the containers.  The detector
+`docker-compose.yml` injects these values into the containers. The detector
 also uses `SAVE_API_URL` to post events to the web API, which is already set to
 `http://web:8000/api/save` when running through Docker Compose.
 
@@ -57,7 +57,7 @@ make dev
 ```
 
 This command simply invokes Docker Compose as defined in
-`docker-compose.yml`.  After the containers are up you can reach the web UI at
+`docker-compose.yml`. After the containers are up you can reach the web UI at
 `http://localhost:8000`, phpMyAdmin at `http://localhost:8081`, Prometheus at
 `http://localhost:9090` and Grafana at `http://localhost:3000`.
 
@@ -76,12 +76,12 @@ create your own certificate authority (CA) and sign the server certificate:
 ```bash
 # generate CA
 openssl genrsa -out certs/ca.key 2048
-openssl req -x509 -new -nodes -key certs/ca.key -days 3650 -out certs/ca.crt -subj "/CN=My Local CA"
+openssl req -x509 -new -nodes -key certs/ca.key -days 3650 -out certs/ca.crt -subj "/CN=Home CA"
 
 # generate server certificate signed by the CA
 openssl genrsa -out certs/server.key 2048
-openssl req -new -key certs/server.key -out certs/server.csr -subj "/CN=localhost"
-openssl x509 -req -in certs/server.csr -CA certs/ca.crt -CAkey certs/ca.key -CAcreateserial -out certs/server.crt -days 365
+openssl req -new -key certs/server.key -out certs/server.csr -subj "/CN=jasonkuan"
+openssl x509 -req -in certs/server.csr -CA certs/ca.crt -CAkey certs/ca.key -CAcreateserial -out certs/server.crt -days 3650 -extfile san.ext
 ```
 
 On Windows, open `mmc.exe`, add the "Certificates" snap-in for the local
@@ -94,7 +94,7 @@ After placing the files, run `make dev` again and browse to
 
 ## Development with Nix
 
-A `flake.nix` is provided which sets up a Python development environment.  Enter
+A `flake.nix` is provided which sets up a Python development environment. Enter
 it with:
 
 ```bash
