@@ -35,6 +35,21 @@ sys.modules.setdefault("fastapi", fastapi_stub)
 sys.modules.setdefault("fastapi.staticfiles", fastapi_staticfiles)
 sys.modules.setdefault("fastapi.responses", fastapi_responses)
 
+# Stub aiortc and media classes
+aiortc_stub = types.ModuleType("aiortc")
+aiortc_stub.RTCPeerConnection = MagicMock()
+aiortc_stub.RTCSessionDescription = MagicMock()
+aiortc_media = types.ModuleType("aiortc.contrib.media")
+aiortc_media.MediaPlayer = MagicMock(return_value=MagicMock(audio=object()))
+aiortc_media.MediaRecorder = MagicMock(
+    return_value=MagicMock(addTrack=MagicMock(), start=MagicMock())
+)
+relay_mock = MagicMock()
+relay_mock.subscribe = lambda track: track
+aiortc_media.MediaRelay = MagicMock(return_value=relay_mock)
+sys.modules.setdefault("aiortc", aiortc_stub)
+sys.modules.setdefault("aiortc.contrib.media", aiortc_media)
+
 uvicorn_stub = types.ModuleType("uvicorn")
 uvicorn_stub.run = MagicMock()
 sys.modules.setdefault("uvicorn", uvicorn_stub)

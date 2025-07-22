@@ -36,6 +36,10 @@ FACE_CONF_THR=0.6
 # https certificate (optional)
 SSL_CERTFILE=./certs/server.crt
 SSL_KEYFILE=./certs/server.key
+# voice settings
+VOICE_ENABLED=1
+VOICE_INPUT_DEVICE=default
+VOICE_OUTPUT_DEVICE=default
 ```
 
 `docker-compose.yml` injects these values into the containers.  The detector

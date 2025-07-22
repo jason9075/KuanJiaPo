@@ -9,3 +9,4 @@ requests
 tf-keras
 uvicorn[standard]
 prometheus-client
+aiortc
