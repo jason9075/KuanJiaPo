@@ -17,6 +17,7 @@ frontend for viewing the latest frame as well as previously captured events.
 
 - Docker and Docker Compose
 - (optional) [Nix](https://nixos.org) if you want to use the provided flake
+- `uvicorn[standard]` or another WebSocket library for voice chat
 
 ## Configuration
 
