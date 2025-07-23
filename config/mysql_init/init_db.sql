@@ -19,3 +19,11 @@ CREATE TABLE event (
     confidence FLOAT NOT NULL,
     created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE reminder (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    audio_path VARCHAR(512) NOT NULL,
+    play_time DATETIME NOT NULL,
+    played TINYINT DEFAULT 0,
+    created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

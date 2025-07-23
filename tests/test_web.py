@@ -23,6 +23,9 @@ fastapi_stub.Request = object
 fastapi_stub.Query = lambda *args, **kwargs: None
 fastapi_stub.WebSocket = object
 fastapi_stub.WebSocketDisconnect = Exception
+fastapi_stub.UploadFile = object
+fastapi_stub.File = lambda *args, **kwargs: None
+fastapi_stub.Form = lambda *args, **kwargs: None
 
 fastapi_staticfiles = types.ModuleType("fastapi.staticfiles")
 fastapi_staticfiles.StaticFiles = MagicMock()

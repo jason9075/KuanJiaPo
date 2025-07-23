@@ -1,11 +1,24 @@
 from pathlib import Path
 from typing import Set
 import json
-from fastapi import FastAPI, Request, Query, WebSocket, WebSocketDisconnect
+from fastapi import (
+    FastAPI,
+    Request,
+    Query,
+    WebSocket,
+    WebSocketDisconnect,
+    UploadFile,
+    File,
+    Form,
+)
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, JSONResponse, Response
 
 from prometheus_client import Counter, generate_latest, CONTENT_TYPE_LATEST
+import uuid
+from datetime import datetime
+import threading
+import subprocess
 
 import uvicorn
 import MySQLdb
@@ -19,6 +32,12 @@ load_dotenv()
 # Prometheus counters
 PAGE_VIEWS = Counter("page_views_total", "Total number of page views")
 EVENTS_SAVED = Counter("events_saved_total", "Total number of events saved")
+REMINDERS_PLAYED = Counter(
+    "reminders_played_total", "Total number of reminder audio played"
+)
+
+AUDIO_DIR = os.getenv("REMINDER_AUDIO_DIR", "static/reminders")
+CHECK_INTERVAL = int(os.getenv("REMINDER_CHECK_INTERVAL", "60"))
 
 # Database connection setup
 
@@ -114,6 +133,75 @@ async def save_event(request: Request):
     return JSONResponse({"message": "Event saved successfully"})
 
 
+@app.get("/reminder", response_class=HTMLResponse)
+async def reminder_page():
+    html_file = Path("static/reminder.html")
+    return HTMLResponse(content=html_file.read_text(), status_code=200)
+
+
+@app.post("/api/reminders")
+async def add_reminder(
+    file: UploadFile = File(...), play_time: str = Form(...)
+):
+    ensure_db_connection()
+    os.makedirs(AUDIO_DIR, exist_ok=True)
+    filename = f"{uuid.uuid4()}.mp3"
+    file_path = Path(AUDIO_DIR) / filename
+    with open(file_path, "wb") as f:
+        f.write(await file.read())
+    with db.cursor() as cursor:
+        cursor.execute(
+            "INSERT INTO reminder (audio_path, play_time) VALUES (%s, %s)",
+            (str(file_path), play_time),
+        )
+        db.commit()
+    return JSONResponse({"message": "Reminder saved"})
+
+
+@app.get("/api/reminders")
+async def list_reminders():
+    ensure_db_connection()
+    reminders = []
+    with db.cursor(MySQLdb.cursors.DictCursor) as cursor:
+        cursor.execute(
+            "SELECT id, audio_path, play_time, played FROM reminder ORDER BY play_time"
+        )
+        reminders = cursor.fetchall()
+    tz = pytz.timezone("Asia/Taipei")
+    for r in reminders:
+        r["play_time"] = (
+            r["play_time"].astimezone(tz).strftime("%Y-%m-%d %H:%M:%S")
+        )
+    return JSONResponse(reminders)
+
+
+def reminder_worker():
+    while True:
+        ensure_db_connection()
+        now = datetime.now()
+        rows = []
+        with db.cursor(MySQLdb.cursors.DictCursor) as cursor:
+            cursor.execute(
+                "SELECT id, audio_path FROM reminder WHERE played=0 AND play_time <= %s",
+                (now,),
+            )
+            rows = cursor.fetchall()
+        for r in rows:
+            try:
+                subprocess.Popen(
+                    ["ffplay", "-nodisp", "-autoexit", r["audio_path"]],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
+            except Exception as e:
+                print("playback error", e)
+            REMINDERS_PLAYED.inc()
+            with db.cursor() as cursor:
+                cursor.execute("UPDATE reminder SET played=1 WHERE id=%s", (r["id"],))
+                db.commit()
+        time.sleep(CHECK_INTERVAL)
+
+
 def ensure_db_connection():
     global db
     try:
@@ -155,6 +243,12 @@ class ConnectionManager:
 
 
 manager = ConnectionManager()
+
+
+@app.on_event("startup")
+def start_reminder_thread():
+    os.makedirs(AUDIO_DIR, exist_ok=True)
+    threading.Thread(target=reminder_worker, daemon=True).start()
 
 
 @app.websocket("/ws")

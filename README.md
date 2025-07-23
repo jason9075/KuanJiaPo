@@ -39,6 +39,8 @@ FRAME_DIFF_THR=15
 # https certificate (optional)
 SSL_CERTFILE=./certs/server.crt
 SSL_KEYFILE=./certs/server.key
+REMINDER_AUDIO_DIR=./static/reminders
+REMINDER_CHECK_INTERVAL=60
 ```
 
 `docker-compose.yml` injects these values into the containers. The detector
