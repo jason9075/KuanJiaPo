@@ -119,6 +119,53 @@ The shell hook creates a virtual environment and installs the dependencies from
 - `config/mysql_init/` – database initialization SQL
 - `Makefile` – convenience targets for running and building the project
 
+## Enabling WebRTC Puppeteer Client on Boot (User-level systemd)
+
+If you want the device to automatically join the WebRTC voice call on boot (with real microphone and speaker), you can use a user-level systemd service.
+
+### Step 1: Enable user lingering (so user services run at boot)
+
+```bash
+sudo loginctl enable-linger $(whoami)
+```
+
+### Step 2: Create the service file
+
+Save the following content to:
+
+```bash
+~/.config/systemd/user/webrtc-client.service
+```
+
+```ini
+[Unit]
+Description=WebRTC Puppeteer Headless Client with Xvfb
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Environment=DISPLAY=:99
+ExecStartPre=/run/current-system/sw/bin/sleep 60
+ExecStart=/home/jason9075/.nix-profile/bin/xvfb-run -s "-screen 0 1024x768x24" node /home/jason9075/KuanJiaPo/puppeteer-client.js
+WorkingDirectory=/home/jason9075/KuanJiaPo
+RestartSec=5
+KillSignal=SIGINT
+TimeoutStopSec=10
+
+[Install]
+WantedBy=default.target
+```
+
+### Step 3: Enable and start the service
+
+```bash
+systemctl --user daemon-reload
+systemctl --user enable webrtc-client.service
+systemctl --user start webrtc-client.service
+```
+
+This will automatically start the Puppeteer WebRTC client on boot and connect to the server with audio support, assuming a microphone and speaker are available and Chromium is correctly configured.
+
 ## License
 
 This project is provided as-is without any warranty.
