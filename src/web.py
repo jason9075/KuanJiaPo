@@ -23,7 +23,7 @@ from starlette.background import BackgroundTask
 
 from prometheus_client import Counter, generate_latest, CONTENT_TYPE_LATEST
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 import threading
 import subprocess
 
@@ -177,7 +177,10 @@ async def list_reminders():
         )
         reminders = cursor.fetchall()
     for r in reminders:
-        r["time_of_day"] = r["time_of_day"].strftime("%H:%M")
+        tod = r["time_of_day"]
+        if isinstance(tod, timedelta):
+            tod = (datetime.min + tod).time()
+        r["time_of_day"] = tod.strftime("%H:%M") if hasattr(tod, "strftime") else str(tod)[:5]
         r["audio_url"] = f"/api/reminders/{r['id']}/audio"
     return JSONResponse(reminders)
 
@@ -205,6 +208,25 @@ async def get_reminder_audio(reminder_id: int):
     )
 
 
+@app.delete("/api/reminders/{reminder_id}")
+async def delete_reminder(reminder_id: int):
+    ensure_db_connection()
+    audio_path = None
+    with db.cursor(MySQLdb.cursors.DictCursor) as cursor:
+        cursor.execute("SELECT audio_path FROM reminder WHERE id=%s", (reminder_id,))
+        row = cursor.fetchone()
+        if row:
+            audio_path = row["audio_path"]
+        cursor.execute("DELETE FROM reminder WHERE id=%s", (reminder_id,))
+        db.commit()
+    if audio_path:
+        try:
+            os.remove(audio_path)
+        except FileNotFoundError:
+            pass
+    return JSONResponse({"message": "Deleted"})
+
+
 def reminder_worker():
     while True:
         ensure_db_connection()
@@ -216,9 +238,12 @@ def reminder_worker():
             )
             rows = cursor.fetchall()
         for r in rows:
+            tod = r["time_of_day"]
+            if isinstance(tod, timedelta):
+                tod = (datetime.min + tod).time()
             should_play = (
                 r["day_of_week"] == now.weekday()
-                and r["time_of_day"].strftime("%H:%M") == now.strftime("%H:%M")
+                and tod.strftime("%H:%M") == now.strftime("%H:%M")
                 and (r["last_played"] is None or r["last_played"] != now.date())
             )
             if not should_play:

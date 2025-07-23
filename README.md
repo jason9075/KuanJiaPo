@@ -82,6 +82,7 @@ time. Each playback is counted by the `reminders_played_total` Prometheus
 metric. Reminder audio files are stored under `static/reminders` (configurable
 via `REMINDER_AUDIO_DIR`). The audio for a reminder can be streamed at
 `/api/reminders/<id>/audio`.
+Reminders can also be deleted from the management page.
 
 ## HTTPS Setup
 

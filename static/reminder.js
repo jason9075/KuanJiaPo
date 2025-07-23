@@ -12,6 +12,13 @@ async function loadReminders() {
     audio.controls = true;
     audio.src = r.audio_url;
     div.appendChild(audio);
+    const remove = document.createElement('button');
+    remove.textContent = 'Delete';
+    remove.addEventListener('click', async () => {
+      await fetch(`/api/reminders/${r.id}`, { method: 'DELETE' });
+      loadReminders();
+    });
+    div.appendChild(remove);
     container.appendChild(div);
   });
 }
