@@ -73,6 +73,14 @@ To stop and remove the containers use:
 make stop
 ```
 
+## Reminders
+
+Visit `http://localhost:8000/reminder` to schedule audio reminders. Upload an
+MP3 file and choose a playback time. The server stores reminders in MySQL and
+plays them automatically when the time is reached. Playback occurrences are
+counted by the `reminders_played_total` Prometheus metric. Reminder audio files
+are stored under `static/reminders` (configurable via `REMINDER_AUDIO_DIR`).
+
 ## HTTPS Setup
 
 The web server can run over HTTPS by providing a certificate and key. Docker

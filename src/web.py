@@ -172,6 +172,7 @@ async def list_reminders():
         r["play_time"] = (
             r["play_time"].astimezone(tz).strftime("%Y-%m-%d %H:%M:%S")
         )
+        r["audio_path"] = "/" + r["audio_path"].lstrip("/")
     return JSONResponse(reminders)
 
 
