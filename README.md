@@ -80,7 +80,8 @@ Upload an MP3 file, choose the day of week and the time of day (HH:MM). The
 server stores reminders in MySQL and plays them automatically at the scheduled
 time. Each playback is counted by the `reminders_played_total` Prometheus
 metric. Reminder audio files are stored under `static/reminders` (configurable
-via `REMINDER_AUDIO_DIR`).
+via `REMINDER_AUDIO_DIR`). The audio for a reminder can be streamed at
+`/api/reminders/<id>/audio`.
 
 ## HTTPS Setup
 

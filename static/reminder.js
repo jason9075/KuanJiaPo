@@ -10,7 +10,7 @@ async function loadReminders() {
     div.innerHTML = `<p>${dayNames[r.day_of_week]} ${r.time_of_day}</p>`;
     const audio = document.createElement('audio');
     audio.controls = true;
-    audio.src = r.audio_path;
+    audio.src = r.audio_url;
     div.appendChild(audio);
     container.appendChild(div);
   });

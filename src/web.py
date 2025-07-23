@@ -12,7 +12,14 @@ from fastapi import (
     Form,
 )
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse, JSONResponse, Response
+from fastapi.responses import (
+    HTMLResponse,
+    JSONResponse,
+    Response,
+    StreamingResponse,
+    FileResponse,
+)
+from starlette.background import BackgroundTask
 
 from prometheus_client import Counter, generate_latest, CONTENT_TYPE_LATEST
 import uuid
@@ -166,13 +173,36 @@ async def list_reminders():
     reminders = []
     with db.cursor(MySQLdb.cursors.DictCursor) as cursor:
         cursor.execute(
-            "SELECT id, audio_path, day_of_week, time_of_day, last_played FROM reminder ORDER BY day_of_week, time_of_day"
+            "SELECT id, day_of_week, time_of_day FROM reminder ORDER BY day_of_week, time_of_day"
         )
         reminders = cursor.fetchall()
     for r in reminders:
-        r["audio_path"] = "/" + r["audio_path"].lstrip("/")
         r["time_of_day"] = r["time_of_day"].strftime("%H:%M")
+        r["audio_url"] = f"/api/reminders/{r['id']}/audio"
     return JSONResponse(reminders)
+
+
+@app.get("/api/reminders/{reminder_id}/audio")
+async def get_reminder_audio(reminder_id: int):
+    ensure_db_connection()
+    with db.cursor(MySQLdb.cursors.DictCursor) as cursor:
+        cursor.execute(
+            "SELECT audio_path FROM reminder WHERE id = %s",
+            (reminder_id,),
+        )
+        row = cursor.fetchone()
+        if not row:
+            return Response(status_code=404)
+        file_path = row["audio_path"]
+    try:
+        f = open(file_path, "rb")
+    except FileNotFoundError:
+        return Response(status_code=404)
+    return StreamingResponse(
+        f,
+        media_type="audio/mpeg",
+        background=BackgroundTask(f.close),
+    )
 
 
 def reminder_worker():

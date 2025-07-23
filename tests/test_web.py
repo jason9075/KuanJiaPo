@@ -34,10 +34,16 @@ fastapi_responses = types.ModuleType("fastapi.responses")
 fastapi_responses.HTMLResponse = MagicMock()
 fastapi_responses.JSONResponse = MagicMock()
 fastapi_responses.Response = MagicMock()
+fastapi_responses.StreamingResponse = MagicMock()
+fastapi_responses.FileResponse = MagicMock()
 
 sys.modules.setdefault("fastapi", fastapi_stub)
 sys.modules.setdefault("fastapi.staticfiles", fastapi_staticfiles)
 sys.modules.setdefault("fastapi.responses", fastapi_responses)
+
+starlette_background = types.ModuleType("starlette.background")
+starlette_background.BackgroundTask = MagicMock()
+sys.modules.setdefault("starlette.background", starlette_background)
 
 uvicorn_stub = types.ModuleType("uvicorn")
 uvicorn_stub.run = MagicMock()
