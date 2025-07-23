@@ -23,7 +23,8 @@ CREATE TABLE event (
 CREATE TABLE reminder (
     id INT AUTO_INCREMENT PRIMARY KEY,
     audio_path VARCHAR(512) NOT NULL,
-    play_time DATETIME NOT NULL,
-    played TINYINT DEFAULT 0,
+    day_of_week TINYINT NOT NULL,
+    time_of_day TIME NOT NULL,
+    last_played DATE,
     created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

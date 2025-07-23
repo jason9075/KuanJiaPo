@@ -141,7 +141,9 @@ async def reminder_page():
 
 @app.post("/api/reminders")
 async def add_reminder(
-    file: UploadFile = File(...), play_time: str = Form(...)
+    file: UploadFile = File(...),
+    day_of_week: int = Form(...),
+    time_of_day: str = Form(...),
 ):
     ensure_db_connection()
     os.makedirs(AUDIO_DIR, exist_ok=True)
@@ -151,8 +153,8 @@ async def add_reminder(
         f.write(await file.read())
     with db.cursor() as cursor:
         cursor.execute(
-            "INSERT INTO reminder (audio_path, play_time) VALUES (%s, %s)",
-            (str(file_path), play_time),
+            "INSERT INTO reminder (audio_path, day_of_week, time_of_day) VALUES (%s, %s, %s)",
+            (str(file_path), day_of_week, time_of_day),
         )
         db.commit()
     return JSONResponse({"message": "Reminder saved"})
@@ -164,15 +166,12 @@ async def list_reminders():
     reminders = []
     with db.cursor(MySQLdb.cursors.DictCursor) as cursor:
         cursor.execute(
-            "SELECT id, audio_path, play_time, played FROM reminder ORDER BY play_time"
+            "SELECT id, audio_path, day_of_week, time_of_day, last_played FROM reminder ORDER BY day_of_week, time_of_day"
         )
         reminders = cursor.fetchall()
-    tz = pytz.timezone("Asia/Taipei")
     for r in reminders:
-        r["play_time"] = (
-            r["play_time"].astimezone(tz).strftime("%Y-%m-%d %H:%M:%S")
-        )
         r["audio_path"] = "/" + r["audio_path"].lstrip("/")
+        r["time_of_day"] = r["time_of_day"].strftime("%H:%M")
     return JSONResponse(reminders)
 
 
@@ -183,11 +182,17 @@ def reminder_worker():
         rows = []
         with db.cursor(MySQLdb.cursors.DictCursor) as cursor:
             cursor.execute(
-                "SELECT id, audio_path FROM reminder WHERE played=0 AND play_time <= %s",
-                (now,),
+                "SELECT id, audio_path, day_of_week, time_of_day, last_played FROM reminder"
             )
             rows = cursor.fetchall()
         for r in rows:
+            should_play = (
+                r["day_of_week"] == now.weekday()
+                and r["time_of_day"].strftime("%H:%M") == now.strftime("%H:%M")
+                and (r["last_played"] is None or r["last_played"] != now.date())
+            )
+            if not should_play:
+                continue
             try:
                 subprocess.Popen(
                     ["ffplay", "-nodisp", "-autoexit", r["audio_path"]],
@@ -198,7 +203,10 @@ def reminder_worker():
                 print("playback error", e)
             REMINDERS_PLAYED.inc()
             with db.cursor() as cursor:
-                cursor.execute("UPDATE reminder SET played=1 WHERE id=%s", (r["id"],))
+                cursor.execute(
+                    "UPDATE reminder SET last_played=%s WHERE id=%s",
+                    (now.date(), r["id"]),
+                )
                 db.commit()
         time.sleep(CHECK_INTERVAL)
 

@@ -75,11 +75,12 @@ make stop
 
 ## Reminders
 
-Visit `http://localhost:8000/reminder` to schedule audio reminders. Upload an
-MP3 file and choose a playback time. The server stores reminders in MySQL and
-plays them automatically when the time is reached. Playback occurrences are
-counted by the `reminders_played_total` Prometheus metric. Reminder audio files
-are stored under `static/reminders` (configurable via `REMINDER_AUDIO_DIR`).
+Visit `http://localhost:8000/reminder` to schedule weekly audio reminders.
+Upload an MP3 file, choose the day of week and the time of day (HH:MM). The
+server stores reminders in MySQL and plays them automatically at the scheduled
+time. Each playback is counted by the `reminders_played_total` Prometheus
+metric. Reminder audio files are stored under `static/reminders` (configurable
+via `REMINDER_AUDIO_DIR`).
 
 ## HTTPS Setup
 

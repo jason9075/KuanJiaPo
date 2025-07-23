@@ -6,7 +6,8 @@ async function loadReminders() {
   list.forEach(r => {
     const div = document.createElement('div');
     div.className = 'event-item';
-    div.innerHTML = `<p>${r.play_time}</p>`;
+    const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    div.innerHTML = `<p>${dayNames[r.day_of_week]} ${r.time_of_day}</p>`;
     const audio = document.createElement('audio');
     audio.controls = true;
     audio.src = r.audio_path;
@@ -18,10 +19,12 @@ async function loadReminders() {
 document.getElementById('reminder-form').addEventListener('submit', async e => {
   e.preventDefault();
   const file = document.getElementById('audio').files[0];
-  const playTime = document.getElementById('play-time').value;
+  const day = document.getElementById('day').value;
+  const time = document.getElementById('time').value;
   const formData = new FormData();
   formData.append('file', file);
-  formData.append('play_time', playTime);
+  formData.append('day_of_week', day);
+  formData.append('time_of_day', time);
   await fetch('/api/reminders', { method: 'POST', body: formData });
   loadReminders();
 });
