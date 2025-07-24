@@ -20,7 +20,8 @@ build:						## Build the docker image
 .PHONY: stop
 stop:						## Stop the application
 	@echo "Stopping the application..."
-	@docker compose down --volumes
+	@docker compose down
+	# @docker compose down --volumes
 
 .PHONY: unit-test
 unit-test:					## Run unit tests
