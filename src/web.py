@@ -1,6 +1,5 @@
 from pathlib import Path
 from typing import Set
-import simpleaudio as sa
 import json
 import pytz
 from fastapi import (

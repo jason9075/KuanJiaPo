@@ -267,4 +267,32 @@ document.addEventListener("DOMContentLoaded", () => {
     if (autoCall) {
         callBtn.click();
     }
+
+    // === Reminder playback ===
+    let reminders = [];
+
+    async function fetchReminders() {
+        try {
+            const res = await fetch('/api/reminders');
+            reminders = await res.json();
+        } catch (err) {
+            console.error('Failed to fetch reminders', err);
+        }
+    }
+
+    function checkReminders() {
+        const now = new Date();
+        const day = (now.getDay() + 6) % 7; // convert JS Sunday=0 to 6
+        const time = now.toTimeString().slice(0, 5);
+        reminders.forEach((r) => {
+            if (parseInt(r.day_of_week) === day && r.time_of_day === time) {
+                const audio = new Audio(r.audio_url);
+                audio.play().catch((e) => console.error('audio error', e));
+            }
+        });
+    }
+
+    fetchReminders();
+    setInterval(fetchReminders, 60 * 60 * 1000); // refresh every hour
+    setInterval(checkReminders, 60 * 1000); // check every minute
 });
