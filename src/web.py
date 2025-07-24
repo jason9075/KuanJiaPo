@@ -1,6 +1,8 @@
 from pathlib import Path
 from typing import Set
+import simpleaudio as sa
 import json
+import pytz
 from fastapi import (
     FastAPI,
     Request,
@@ -17,7 +19,6 @@ from fastapi.responses import (
     JSONResponse,
     Response,
     StreamingResponse,
-    FileResponse,
 )
 from starlette.background import BackgroundTask
 
@@ -25,7 +26,6 @@ from prometheus_client import Counter, generate_latest, CONTENT_TYPE_LATEST
 import uuid
 from datetime import datetime, timedelta
 import threading
-import subprocess
 
 import uvicorn
 import MySQLdb
@@ -44,7 +44,6 @@ REMINDERS_PLAYED = Counter(
 )
 
 AUDIO_DIR = os.getenv("REMINDER_AUDIO_DIR", "static/reminders")
-CHECK_INTERVAL = int(os.getenv("REMINDER_CHECK_INTERVAL", "60"))
 
 # Database connection setup
 
@@ -180,7 +179,9 @@ async def list_reminders():
         tod = r["time_of_day"]
         if isinstance(tod, timedelta):
             tod = (datetime.min + tod).time()
-        r["time_of_day"] = tod.strftime("%H:%M") if hasattr(tod, "strftime") else str(tod)[:5]
+        r["time_of_day"] = (
+            tod.strftime("%H:%M") if hasattr(tod, "strftime") else str(tod)[:5]
+        )
         r["audio_url"] = f"/api/reminders/{r['id']}/audio"
     return JSONResponse(reminders)
 
@@ -225,46 +226,6 @@ async def delete_reminder(reminder_id: int):
         except FileNotFoundError:
             pass
     return JSONResponse({"message": "Deleted"})
-
-
-def reminder_worker():
-    while True:
-        ensure_db_connection()
-        now = datetime.now()
-        rows = []
-        with db.cursor(MySQLdb.cursors.DictCursor) as cursor:
-            cursor.execute(
-                "SELECT id, audio_path, day_of_week, time_of_day, last_played FROM reminder"
-            )
-            rows = cursor.fetchall()
-        for r in rows:
-            tod = r["time_of_day"]
-            if isinstance(tod, timedelta):
-                tod = (datetime.min + tod).time()
-            should_play = (
-                r["day_of_week"] == now.weekday()
-                and tod.strftime("%H:%M") == now.strftime("%H:%M")
-                and (r["last_played"] is None or r["last_played"] != now.date())
-            )
-            if not should_play:
-                continue
-            try:
-                subprocess.Popen(
-                    ["ffplay", "-nodisp", "-autoexit", r["audio_path"]],
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                )
-            except Exception as e:
-                print("playback error", e)
-            REMINDERS_PLAYED.inc()
-            with db.cursor() as cursor:
-                cursor.execute(
-                    "UPDATE reminder SET last_played=%s WHERE id=%s",
-                    (now.date(), r["id"]),
-                )
-                db.commit()
-        time.sleep(CHECK_INTERVAL)
-
 
 def ensure_db_connection():
     global db
@@ -312,7 +273,6 @@ manager = ConnectionManager()
 @app.on_event("startup")
 def start_reminder_thread():
     os.makedirs(AUDIO_DIR, exist_ok=True)
-    threading.Thread(target=reminder_worker, daemon=True).start()
 
 
 @app.websocket("/ws")
