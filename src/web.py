@@ -1,11 +1,31 @@
 from pathlib import Path
 from typing import Set
+import simpleaudio as sa
 import json
-from fastapi import FastAPI, Request, Query, WebSocket, WebSocketDisconnect
+import pytz
+from fastapi import (
+    FastAPI,
+    Request,
+    Query,
+    WebSocket,
+    WebSocketDisconnect,
+    UploadFile,
+    File,
+    Form,
+)
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse, JSONResponse, Response
+from fastapi.responses import (
+    HTMLResponse,
+    JSONResponse,
+    Response,
+    StreamingResponse,
+)
+from starlette.background import BackgroundTask
 
 from prometheus_client import Counter, generate_latest, CONTENT_TYPE_LATEST
+import uuid
+from datetime import datetime, timedelta
+import threading
 
 import uvicorn
 import MySQLdb
@@ -19,6 +39,11 @@ load_dotenv()
 # Prometheus counters
 PAGE_VIEWS = Counter("page_views_total", "Total number of page views")
 EVENTS_SAVED = Counter("events_saved_total", "Total number of events saved")
+REMINDERS_PLAYED = Counter(
+    "reminders_played_total", "Total number of reminder audio played"
+)
+
+AUDIO_DIR = os.getenv("REMINDER_AUDIO_DIR", "static/reminders")
 
 # Database connection setup
 
@@ -114,6 +139,94 @@ async def save_event(request: Request):
     return JSONResponse({"message": "Event saved successfully"})
 
 
+@app.get("/reminder", response_class=HTMLResponse)
+async def reminder_page():
+    html_file = Path("static/reminder.html")
+    return HTMLResponse(content=html_file.read_text(), status_code=200)
+
+
+@app.post("/api/reminders")
+async def add_reminder(
+    file: UploadFile = File(...),
+    day_of_week: int = Form(...),
+    time_of_day: str = Form(...),
+):
+    ensure_db_connection()
+    os.makedirs(AUDIO_DIR, exist_ok=True)
+    filename = f"{uuid.uuid4()}.mp3"
+    file_path = Path(AUDIO_DIR) / filename
+    with open(file_path, "wb") as f:
+        f.write(await file.read())
+    with db.cursor() as cursor:
+        cursor.execute(
+            "INSERT INTO reminder (audio_path, day_of_week, time_of_day) VALUES (%s, %s, %s)",
+            (str(file_path), day_of_week, time_of_day),
+        )
+        db.commit()
+    return JSONResponse({"message": "Reminder saved"})
+
+
+@app.get("/api/reminders")
+async def list_reminders():
+    ensure_db_connection()
+    reminders = []
+    with db.cursor(MySQLdb.cursors.DictCursor) as cursor:
+        cursor.execute(
+            "SELECT id, day_of_week, time_of_day FROM reminder ORDER BY day_of_week, time_of_day"
+        )
+        reminders = cursor.fetchall()
+    for r in reminders:
+        tod = r["time_of_day"]
+        if isinstance(tod, timedelta):
+            tod = (datetime.min + tod).time()
+        r["time_of_day"] = (
+            tod.strftime("%H:%M") if hasattr(tod, "strftime") else str(tod)[:5]
+        )
+        r["audio_url"] = f"/api/reminders/{r['id']}/audio"
+    return JSONResponse(reminders)
+
+
+@app.get("/api/reminders/{reminder_id}/audio")
+async def get_reminder_audio(reminder_id: int):
+    ensure_db_connection()
+    with db.cursor(MySQLdb.cursors.DictCursor) as cursor:
+        cursor.execute(
+            "SELECT audio_path FROM reminder WHERE id = %s",
+            (reminder_id,),
+        )
+        row = cursor.fetchone()
+        if not row:
+            return Response(status_code=404)
+        file_path = row["audio_path"]
+    try:
+        f = open(file_path, "rb")
+    except FileNotFoundError:
+        return Response(status_code=404)
+    return StreamingResponse(
+        f,
+        media_type="audio/mpeg",
+        background=BackgroundTask(f.close),
+    )
+
+
+@app.delete("/api/reminders/{reminder_id}")
+async def delete_reminder(reminder_id: int):
+    ensure_db_connection()
+    audio_path = None
+    with db.cursor(MySQLdb.cursors.DictCursor) as cursor:
+        cursor.execute("SELECT audio_path FROM reminder WHERE id=%s", (reminder_id,))
+        row = cursor.fetchone()
+        if row:
+            audio_path = row["audio_path"]
+        cursor.execute("DELETE FROM reminder WHERE id=%s", (reminder_id,))
+        db.commit()
+    if audio_path:
+        try:
+            os.remove(audio_path)
+        except FileNotFoundError:
+            pass
+    return JSONResponse({"message": "Deleted"})
+
 def ensure_db_connection():
     global db
     try:
@@ -155,6 +268,11 @@ class ConnectionManager:
 
 
 manager = ConnectionManager()
+
+
+@app.on_event("startup")
+def start_reminder_thread():
+    os.makedirs(AUDIO_DIR, exist_ok=True)
 
 
 @app.websocket("/ws")

@@ -39,6 +39,8 @@ FRAME_DIFF_THR=15
 # https certificate (optional)
 SSL_CERTFILE=./certs/server.crt
 SSL_KEYFILE=./certs/server.key
+REMINDER_AUDIO_DIR=./static/reminders
+REMINDER_CHECK_INTERVAL=60
 ```
 
 `docker-compose.yml` injects these values into the containers. The detector
@@ -70,6 +72,17 @@ To stop and remove the containers use:
 ```bash
 make stop
 ```
+
+## Reminders
+
+Visit `http://localhost:8000/reminder` to schedule weekly audio reminders.
+Upload an MP3 file, choose the day of week and the time of day (HH:MM). The
+server stores reminders in MySQL and plays them automatically at the scheduled
+time. Each playback is counted by the `reminders_played_total` Prometheus
+metric. Reminder audio files are stored under `static/reminders` (configurable
+via `REMINDER_AUDIO_DIR`). The audio for a reminder can be streamed at
+`/api/reminders/<id>/audio`.
+Reminders can also be deleted from the management page.
 
 ## HTTPS Setup
 

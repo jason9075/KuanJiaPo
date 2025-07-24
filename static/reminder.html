@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reminders</title>
+    <link rel="stylesheet" href="/static/style.css" />
+    <script src="/static/reminder.js" defer></script>
+  </head>
+  <body>
+    <nav class="navbar">
+      <a href="/" class="nav-item">Home</a>
+      <a href="/reminder" class="nav-item active">Reminders</a>
+    </nav>
+    <h1>Schedule Reminder</h1>
+    <form id="reminder-form">
+      <input type="file" id="audio" accept="audio/mpeg" required />
+      <select id="day" required>
+        <option value="0">Monday</option>
+        <option value="1">Tuesday</option>
+        <option value="2">Wednesday</option>
+        <option value="3">Thursday</option>
+        <option value="4">Friday</option>
+        <option value="5">Saturday</option>
+        <option value="6">Sunday</option>
+      </select>
+      <input type="time" id="time" required />
+      <button type="submit">Add</button>
+    </form>
+    <div id="reminder-list"></div>
+  </body>
+</html>
