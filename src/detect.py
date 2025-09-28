@@ -27,7 +27,7 @@ FACE_CONF_THR = float(os.getenv("FACE_CONF_THR"))
 OFF_HOURS_INTERVAL_SEC = int(
     os.getenv("OFF_HOURS_INTERVAL_SEC", str(INTERVAL_SEC * 3))
 )
-FRAME_DIFF_THR = float(os.getenv("FRAME_DIFF_THR", "5"))
+FRAME_DIFF_THR = float(os.getenv("FRAME_DIFF_THR", "10"))
 
 
 class Person:
