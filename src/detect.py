@@ -27,7 +27,7 @@ FACE_CONF_THR = float(os.getenv("FACE_CONF_THR"))
 OFF_HOURS_INTERVAL_SEC = int(
     os.getenv("OFF_HOURS_INTERVAL_SEC", str(INTERVAL_SEC * 3))
 )
-FRAME_DIFF_THR = float(os.getenv("FRAME_DIFF_THR", "15"))
+FRAME_DIFF_THR = float(os.getenv("FRAME_DIFF_THR", "10"))
 
 
 class Person:
@@ -61,6 +61,7 @@ def save_event(frame, bbox, confidence):
             "bbox_h": bbox["h"],
             "confidence": confidence,
         },
+        verify="/certs/ca.crt"
     )
 
 
@@ -163,8 +164,10 @@ def detect_faces():
             face_vector = detection["embedding"]
             face_area = detection["facial_area"]
 
-            for person in person_dict.values():
+            matched = False
+            for person in list(person_dict.values()):
                 if is_similar(face_vector, person.face_vector):
+                    matched = True
                     if datetime.now() - person.timestamp > timedelta(
                         minutes=PERSON_INTERVAL_MIN
                     ):
@@ -173,7 +176,7 @@ def detect_faces():
                         save_event(frame, face_area, confidence)
                         print(f"Person {person.uuid} updated.")
                     break
-            else:
+            if not matched:
                 new_person = Person(face_vector)
                 person_dict[new_person.uuid] = new_person
                 save_event(frame, face_area, confidence)
