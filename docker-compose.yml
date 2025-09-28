@@ -27,8 +27,10 @@ services:
     container_name: kuanjiapo_detect
     restart: always
     command: python detect.py
+    env_file:
+      - .env
     environment:
-      SAVE_API_URL: "http://web:8000/api/save"
+      SAVE_API_URL: "https://web:8000/api/save"
     volumes:
       - ./static:/app/static
       - ./src/detect.py:/app/detect.py
