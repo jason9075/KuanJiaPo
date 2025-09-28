@@ -33,6 +33,7 @@ services:
       - ./static:/app/static
       - ./src/detect.py:/app/detect.py
       - .env:/app/.env
+      - ./certs:/certs:ro
     privileged: true
     devices:
       - /dev:/dev
